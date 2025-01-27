@@ -1,9 +1,8 @@
 import streamlit as st
-from utils.api_client import APIClient
-from utils.excel_utils import ExcelHandler
-from utils.validation import ExcelValidator
+from vip_datamakelaar.utils.api_client import APIClient
+from vip_datamakelaar.utils.excel_utils import ExcelHandler
+from vip_datamakelaar.utils.validation import ExcelValidator
 
-import io
 import pandas as pd
 import os
 import json
@@ -24,7 +23,7 @@ def load_css():
 
 
         # 2. Bouw het CSS pad op en controleer bestaan
-        css_file = os.path.join(current_dir, "assets", "css", "style.css")
+        css_file = os.path.join(current_dir,"vip_datamakelaar", "assets", "css", "style.css")
         logging.debug(f"CSS bestand locatie: {css_file}")
         logging.debug(f"Bestaat CSS bestand? {os.path.exists(css_file)}")
 
@@ -417,7 +416,7 @@ def show_login():
         else:
             st.error("Ongeldige inloggegevens, probeer opnieuw.")
 
-load_css()
+# load_css()
 
 if "logged_in" not in st.session_state:
     is_ingelogd = False
