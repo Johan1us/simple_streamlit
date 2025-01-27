@@ -1,0 +1,29 @@
+[theme]
+# Light mode colors
+primaryColor = "#2b579a"  # Matches your button and header colors
+backgroundColor = "#ffffff"  # Matches your main background
+secondaryBackgroundColor = "#f0f2f6"  # Matches your hover state color
+textColor = "#2b579a"  # Matches your header color
+
+# Dark mode colors
+base = "light"  # Can be "light" or "dark"
+darkPrimaryColor = "#4b77ba"  # Lighter shade of your primary color for dark mode
+darkBackgroundColor = "#0e1117"  # Dark background
+darkSecondaryBackgroundColor = "#262730"  # Dark secondary background
+darkTextColor = "#fafafa"  # Light text for dark mode
+
+# Typography
+font = "sans serif"
+
+[server]
+# Hide the Streamlit menu and footer that we're already hiding in CSS
+showToolbar = false
+showFooter = false
+
+[browser]
+gatherUsageStats = false
+
+[client]
+# Ensures consistent tooling behavior
+toolbarMode = "minimal"
+showErrorDetails = true 
