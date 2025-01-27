@@ -1,0 +1,18 @@
+{
+  "dataset": "PO Gevels",
+  "objectType": "Building",
+  "attributes": [
+    {
+      "excelColumnName": "Gevelpartner",
+      "AttributeName": "Gevelpartner - Gevels - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Jaar laatste gevelonderhoud",
+      "AttributeName": "Jaar laatste gevelonderhoud - Gevels - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Betrokken Projectleider Techniek Gevels",
+      "AttributeName": "Betrokken Projectleider Techniek Gevels - Gevels - Woonstad Rotterdam"
+    }
+  ]
+}

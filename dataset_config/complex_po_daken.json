@@ -1,0 +1,26 @@
+{
+  "dataset": "PO Daken",
+  "objectType": "Building",
+  "attributes": [
+    {
+      "excelColumnName": "Dakpartner",
+      "AttributeName": "Dakpartner - Building - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Jaar laatste dakonderhoud",
+      "AttributeName": "Jaar laatste dakonderhoud - Building - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Betrokken Projectleider Techniek Daken",
+      "AttributeName": "Betrokken Projectleider Techniek Daken - Building - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Dakveiligheidsvoorzieningen aangebracht?",
+      "AttributeName": "Dakveiligheidsvoorzieningen aangebracht  - Building - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Antenne(opstelplaats) op dak?",
+      "AttributeName": "Antenne(opstelplaats) op dak  - Building - Woonstad Rotterdam"
+    }
+  ]
+}

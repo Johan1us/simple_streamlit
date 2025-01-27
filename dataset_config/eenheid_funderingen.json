@@ -1,0 +1,34 @@
+{
+  "dataset": "Eenheid Funderingen",
+  "objectType": "Unit",
+  "attributes": [
+    {
+      "excelColumnName": "Huidig funderingslabel",
+      "AttributeName": "Huidig funderingslabel - Funderingen - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Soort Fundering",
+      "AttributeName": "Soort fundering - Funderingen - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Handhavingstermijn",
+      "AttributeName": "Handhavingstermijn - Funderingen - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Jaar onderzoek",
+      "AttributeName": "Jaar onderzoek - Funderingen - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Aantal rapporten",
+      "AttributeName": "Aantal rapporten - Funderingen - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Jaar funderingsherstel",
+      "AttributeName": "Jaar funderingsherstel - Funderingen - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Methode funderingsherstel",
+      "AttributeName": "Methode funderingsherstel - Funderingen - Woonstad Rotterdam"
+    }
+  ]
+}

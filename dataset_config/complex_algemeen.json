@@ -1,0 +1,18 @@
+{
+  "dataset": "Complex Algemeen",
+  "objectType": "Building",
+  "attributes": [
+    {
+      "excelColumnName": "Gebiedsmanager",
+      "AttributeName": "Gebiedsmanager - Complex algemeen -  Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Huisaannemer",
+      "AttributeName": "Huisaannemer - Building - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Medewerker Buurtbeheer",
+      "AttributeName": "Medewerker Buurtbeheer - Building - Woonstad Rotterdam"
+    }
+  ]
+}

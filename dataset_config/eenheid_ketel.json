@@ -1,0 +1,42 @@
+{
+  "dataset": "Eenheid Ketel",
+  "objectType": "Unit",
+  "attributes": [
+    {
+      "excelColumnName": "Adres",
+      "AttributeName": "Adres"
+    },
+    {
+      "excelColumnName": "Bouwjaar ketel",
+      "AttributeName": "Bouwjaar - VHE algemeen -  Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Cluster",
+      "AttributeName": "Clustercode"
+    },
+    {
+      "excelColumnName": "Datum Plaatsing",
+      "AttributeName": "Datum opname - EPA - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Installateur",
+      "AttributeName": "Aannemer funderingsherstel - Funderingen - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "OGE Nummer",
+      "AttributeName": "OGE Nummer"
+    },
+    {
+      "excelColumnName": "Opmerking",
+      "AttributeName": "Opmerkingen - Oplevering -  Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Type",
+      "AttributeName": "UnitTypeName"
+    },
+    {
+      "excelColumnName": "Uniek ID",
+      "AttributeName": "BagVerblijfsobjectId"
+    }
+  ]
+}

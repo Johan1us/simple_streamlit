@@ -1,0 +1,59 @@
+/* Import fonts */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap');
+
+/* Base theme variables */
+:root {
+    --primary-color: #ffffff;
+    --background-color: #b5b7f3;
+    --secondary-background-color: #09ec49;
+    --text-color: #0235b7;
+    --font-family: 'Roboto Mono', monospace;
+}
+
+/* Global styles */
+* {
+    font-family: var(--font-family) !important;
+}
+
+/* Main app container */
+.stApp {
+    background-color: var(--background-color) !important;
+}
+
+/* Text elements */
+.stMarkdown, 
+.stText, 
+h1, h2, h3, 
+.stTitle, 
+div, p, span {
+    color: var(--text-color) !important;
+    font-family: var(--font-family) !important;
+}
+
+/* Buttons */
+.stButton button {
+    background-color: var(--primary-color) !important;
+    color: var(--background-color) !important;
+    border: none !important;
+}
+
+/* Form elements */
+.stSelectbox, 
+.stTextInput {
+    font-family: var(--font-family) !important;
+}
+
+/* Hide Streamlit branding */
+#MainMenu {visibility: hidden !important;}
+footer {visibility: hidden !important;}
+header {visibility: hidden !important;}
+
+/* Specific Streamlit components */
+[data-testid="stText"],
+[data-testid="stMarkdown"],
+[data-testid="stHeader"],
+[data-testid="baseButton-secondary"],
+.stTextInput > div > div > input,
+.stSelectbox > div > div > div {
+    font-family: var(--font-family) !important;
+}

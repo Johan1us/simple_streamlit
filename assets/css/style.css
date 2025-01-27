@@ -1,0 +1,118 @@
+/* Main container */
+.main {
+    background-color: #ffffff;
+}
+
+/* Headers */
+h1, h2, h3 {
+    color: #2b579a;
+    font-weight: 500;
+}
+
+/* Buttons */
+.stButton>button {
+    background-color: #ffffff;
+    color: #2b579a;
+    border: 1px solid #2b579a;
+    padding: 4px 12px;
+    border-radius: 2px;
+    font-weight: 400;
+    margin: 0;
+}
+
+/* Button hover */
+.stButton>button:hover {
+    background-color: #f0f2f6;
+    color: #2b579a;
+    border: 1px solid #2b579a;
+}
+
+/* Download button */
+.stDownloadButton>button {
+    background-color: #ffffff;
+    color: #2b579a;
+    border: 1px solid #2b579a;
+    padding: 4px 12px;
+    border-radius: 2px;
+    font-weight: 400;
+    margin: 0;
+}
+
+/* Download button hover */
+.stDownloadButton>button:hover {
+    background-color: #f0f2f6;
+    color: #2b579a;
+    border: 1px solid #2b579a;
+}
+
+/* Select dropdowns */
+.stSelect>div>div>div {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    padding: 4px 12px;
+    border-radius: 2px;
+}
+
+/* Select dropdown hover */
+.stSelect>div>div>div:hover {
+    background-color: #f0f2f6;
+    color: #2b579a;
+}
+
+/* Text inputs */
+.stTextInput>div>div>input {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    padding: 4px 12px;
+    border-radius: 2px;
+}
+
+/* File uploader */
+.stFileUploader>div {
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+}
+
+/* Success/Info/Error messages */
+.stSuccess, .stInfo, .stError {
+    padding: 8px 16px;
+    border-radius: 2px;
+    border: none;
+}
+
+/* Expander */
+.streamlit-expanderHeader {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+}
+
+/* Remove default Streamlit menu and footer */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+
+/* Custom container for content sections */
+.content-section {
+    padding: 1.5rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    margin: 1rem 0;
+}
+
+/* Dataframe styling */
+.dataframe {
+    border: none !important;
+}
+
+/* Dataframe header */
+.dataframe td, .dataframe th {
+    border: 1px solid #e0e0e0 !important;
+    padding: 8px !important;
+}
+
+/* Metrics styling */
+[data-testid="stMetricValue"] {
+    font-size: 1.2rem;
+    color: #2b579a;
+}

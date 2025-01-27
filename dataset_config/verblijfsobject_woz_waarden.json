@@ -1,0 +1,14 @@
+{
+  "dataset": "Verblijfsobject WOZ waarden",
+  "objectType": "Verblijfsobject",
+  "attributes": [
+    {
+      "excelColumnName": "WOZ waarde",
+      "AttributeName": "WOZ waarde - Verblijfsobject - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "WOZ peildatum",
+      "AttributeName": "WOZ peildatum - Verblijfsobject - Woonstad Rotterdam"
+    }
+  ]
+}
