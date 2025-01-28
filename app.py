@@ -411,14 +411,20 @@ def build_metadata_map(metadata: dict, config: dict) -> dict:
 
 def show_login():
     st.title("Inloggen")
-    username = st.text_input("Gebruikersnaam")
-    password = st.text_input("Wachtwoord", type="password")
-    if st.button("Login"):
+    
+    def handle_login():
         if username == "admin" and password == "admin":  # Dummy credentials
             st.session_state["logged_in"] = True
             st.rerun()
         else:
             st.error("Ongeldige inloggegevens, probeer opnieuw.")
+    
+    username = st.text_input("Gebruikersnaam", key="username")
+    password = st.text_input("Wachtwoord", type="password", key="password", 
+                            on_change=handle_login if "password" in st.session_state else None)
+    
+    if st.button("Login"):
+        handle_login()
 
 
 load_css()
