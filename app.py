@@ -413,7 +413,7 @@ def show_login():
     st.title("Inloggen")
     
     def handle_login():
-        if username == "admin" and password == "admin":  # Dummy credentials
+        if st.session_state.username == "admin" and st.session_state.password == "admin":  # Dummy credentials
             st.session_state["logged_in"] = True
             st.rerun()
         else:
