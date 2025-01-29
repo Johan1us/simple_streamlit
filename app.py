@@ -415,7 +415,6 @@ def show_login():
     def handle_login():
         if st.session_state.username == "admin" and st.session_state.password == "admin":  # Dummy credentials
             st.session_state["logged_in"] = True
-            st.rerun()
         else:
             st.error("Ongeldige inloggegevens, probeer opnieuw.")
     
