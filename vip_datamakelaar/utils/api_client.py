@@ -209,7 +209,8 @@ class APIClient:
             attributes: Optional[List[str]] = None,
             identifier: Optional[str] = None,
             only_active: bool = False,
-            page_size: int = 1000
+            page_size: int = 1000,
+            st=None,
     ) -> Dict[str, Any]:
         """
         Haalt alle objecten op van een bepaald objectType, over alle beschikbare pagina's heen.
@@ -234,6 +235,16 @@ class APIClient:
                             - "totalPages": aantal pagina's dat is opgehaald
                             - "pageSize": het gebruikte paginaformaat
         """
+        status_objects = st.empty()
+        status_totals = st.empty()
+        status_time = st.empty()
+        def feedback():
+            if st is not None:
+                status_objects.info(f"Batch {current_page + 1} met {len(current_page_objects)} objecten opgehaald")
+                status_totals.info(f"Totaal aantal objecten nu: {len(all_objects)}")
+                status_time.info(f"Ophalen duurde in totaal {time.time() - start_time:.2f} seconden")
+
+
         start_time = time.time()
         all_objects = []
         current_page = 0
@@ -255,6 +266,7 @@ class APIClient:
             print(f"[DEBUG] Ophalen duurde {time.time() - start_time:.2f} seconden")
             print(f"[DEBUG] Ophalen pagina {current_page}, {len(current_page_objects)} objecten")
             print(f"[DEBUG] Totaal aantal objecten nu: {len(all_objects)}")
+            feedback()
 
             # Controleer of we klaar zijn: minder objecten dan page_size betekent laatste pagina
             if len(current_page_objects) < page_size:

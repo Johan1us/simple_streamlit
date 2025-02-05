@@ -9,6 +9,10 @@
     {
       "excelColumnName": "WOZ peildatum",
       "AttributeName": "WOZ peildatum - Verblijfsobject - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Belastingobjectnummer",
+      "AttributeName": "Belastingobjectnummer - Verblijfsobject - Woonstad Rotterdam"
     }
   ]
 }

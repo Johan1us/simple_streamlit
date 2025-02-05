@@ -18,6 +18,23 @@ class ExcelValidator:
         Returns:
             List[Dict]: Lijst met gevonden fouten
         """
+        print("\nDebug - Initial DataFrame Info:")
+        print("DataFrame shape:", df.shape)
+        print("\nOriginal DataFrame dtypes:")
+        print(df.dtypes)
+        
+        # Convert types before validation
+        df = self._convert_dataframe_types(df)
+        
+        print("\nConverted DataFrame dtypes:")
+        print(df.dtypes)
+        print("\nFirst row data:")
+        print(df.iloc[0])
+        print("\nMetadata being used:")
+        print("Object Type:", self.object_type)
+        print("Columns Mapping:", self.columns_mapping)
+        print("Metadata fields:", list(self.metadata.keys()))
+
         errors = []
         self._print_validation_header()
 
@@ -106,21 +123,28 @@ class ExcelValidator:
             "expected": expected
         }
 
-    def _validate_value_type(self, row: int, column: str, value: Any,
-                           metadata: Dict) -> List[Dict]:
+    def _validate_value_type(self, row: int, column: str, value: Any, metadata: Dict) -> List[Dict]:
+        """
+        Validate that a value matches the expected type from metadata, without converting it.
+        
+        Args:
+            row (int): Row number
+            column (str): Column name
+            value (Any): The value to validate
+            metadata (Dict): Metadata specifications
+
+        Returns:
+            List[Dict]: List of validation errors
+        """
         errors = []
         if "type" not in metadata:
             return errors
 
         type_value = metadata["type"].upper()
 
-        # Converteer integers naar strings als STRING verwacht wordt
-        if type_value == "STRING" and isinstance(value, (int, float)):
-            value = str(value)
-
         type_validators = {
             "STRING": lambda v: isinstance(v, str),
-            "NUMBER": lambda v: self._is_number(v),
+            "NUMBER": lambda v: isinstance(v, (int)) and not isinstance(v, bool),  # Specifically check for int
             "BOOLEAN": lambda v: str(v).lower() in ["ja", "nee", None],
             "DATE": lambda v: self._is_valid_date(v)
         }
@@ -128,7 +152,7 @@ class ExcelValidator:
         if type_value in type_validators and not type_validators[type_value](value):
             error_messages = {
                 "STRING": ("Waarde moet een tekst zijn", "string"),
-                "NUMBER": ("Waarde moet een getal zijn", "getal"),
+                "NUMBER": ("Waarde moet een geheel getal zijn", "geheel getal"),
                 "BOOLEAN": ("Waarde moet Ja, Nee of leeg zijn", "Ja, Nee of leeg"),
                 "DATE": ("Waarde moet een geldige datum zijn", "datum (bijv. 01-01-2023)")
             }
@@ -395,6 +419,64 @@ class ExcelValidator:
 
         return errors
 
+    def _convert_dataframe_types(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Convert DataFrame column types based on metadata specifications.
+        
+        Args:
+            df (pd.DataFrame): Original DataFrame
+        
+        Returns:
+            pd.DataFrame: DataFrame with converted types
+        """
+        print("\nDebug - Converting DataFrame types based on metadata")
+        
+        for api_name, excel_name in self.reverse_mapping.items():
+            if excel_name not in df.columns:
+                continue
+            
+            field_metadata = self.metadata.get(api_name, {})
+            field_type = field_metadata.get('type', '').upper()
+            
+            print(f"\nProcessing column: {excel_name}")
+            print(f"Metadata type: {field_type}")
+            print(f"Current dtype: {df[excel_name].dtype}")
+            
+            try:
+                if field_type == 'NUMBER':
+                    # Check if it should be integer (you might want to add a specific integer flag in metadata)
+                    df[excel_name] = pd.to_numeric(df[excel_name], errors='coerce').astype('Int64')
+                elif field_type == 'STRING':
+                    df[excel_name] = df[excel_name].astype(str).replace('nan', None)
+                elif field_type == 'DATE':
+                    df[excel_name] = pd.to_datetime(df[excel_name], errors='coerce')
+                elif field_type == 'BOOLEAN':
+                    # Convert 'Ja'/'Nee' to boolean
+                    df[excel_name] = df[excel_name].map({'Ja': True, 'Nee': False})
+                
+                print(f"New dtype: {df[excel_name].dtype}")
+                
+            except Exception as e:
+                print(f"Error converting {excel_name}: {str(e)}")
+            
+        return df
+
+    def show_metadata_columns(self):
+        """
+        Display the columns and their expected types from metadata
+        """
+        print("\nExpected Column Types from Metadata:")
+        print("-" * 60)
+        print(f"{'Excel Column':<30} | {'Expected Type':<15} | {'Required':<8}")
+        print("-" * 60)
+        
+        for api_name, excel_name in self.reverse_mapping.items():
+            field_metadata = self.metadata.get(api_name, {})
+            field_type = field_metadata.get('type', 'UNKNOWN').upper()
+            required = "Yes" if field_metadata.get('required', False) else "No"
+            print(f"{excel_name:<30} | {field_type:<15} | {required:<8}")
+        print("-" * 60)
+
 if __name__ == "__main__":
     # laad de excel output
     df = pd.read_excel("output.xlsx")
@@ -406,3 +488,8 @@ if __name__ == "__main__":
     # haal de metadata op voor het objectType
     object_type = dataset_manager.get_object_type(dataset_name)
     metadata = dataset_manager.api_client.get_metadata(object_type)
+    
+    validator = ExcelValidator(metadata, columns_mapping, object_type)
+    validator.show_metadata_columns()  # Show column info before validation
+    df = validator._convert_dataframe_types(df)  # Convert types immediately after reading
+    errors = validator.validate_excel(df)
