@@ -300,33 +300,6 @@ class APIClient:
         print(f"[DEBUG] Start update van {len(objects_data)} objecten in batches van {batch_size}")
         print(f"[DEBUG] Timeout per request: {timeout} seconden")
 
-        # # Converteer specifieke attributen naar het juiste formaat
-        # for obj in objects_data:
-        #     if 'attributes' in obj:
-        #         # Converteer "Jaar laatste gevelonderhoud" naar een integer
-        #         if 'Jaar laatste gevelonderhoud - Gevels - Woonstad Rotterdam' in obj['attributes']:
-        #             jaar = obj['attributes']['Jaar laatste gevelonderhoud - Gevels - Woonstad Rotterdam']
-        #             if jaar is not None and isinstance(jaar, (str, float)):
-        #                 obj['attributes']['Jaar laatste gevelonderhoud - Gevels - Woonstad Rotterdam'] = int(
-        #                     float(jaar))
-        #         # Converteer "Jaar laatste dakonderhoud" naar een integer
-        #         if 'Jaar laatste dakonderhoud - Building - Woonstad Rotterdam' in obj['attributes']:
-        #             jaar = obj['attributes']['Jaar laatste dakonderhoud - Building - Woonstad Rotterdam']
-        #             if jaar is not None and isinstance(jaar, (str, float)):
-        #                 obj['attributes']['Jaar laatste dakonderhoud - Building - Woonstad Rotterdam'] = int(
-        #                     float(jaar))
-        #         # Converteer "WOZ waarde" naar een integer
-        #         if 'WOZ waarde - Unit - Woonstad Rotterdam' in obj['attributes']:
-        #             woz = obj['attributes']['WOZ waarde - Unit - Woonstad Rotterdam']
-        #             if woz is not None and isinstance(woz, (str, float)):
-        #                 obj['attributes']['WOZ waarde - Unit - Woonstad Rotterdam'] = int(float(woz))
-        #         # Converteer "WOZ peildatum" naar het gewenste datumformaat (DD-MM-YYYY)
-        #         if 'WOZ peildatum - Unit - Woonstad Rotterdam' in obj['attributes']:
-        #             woz_peildatum = obj['attributes']['WOZ peildatum - Unit - Woonstad Rotterdam']
-        #             if woz_peildatum is not None and isinstance(woz_peildatum, str):
-        #                 # Converteer bijvoorbeeld '2023-01-01' naar '01-01-2023'
-        #                 woz_peildatum = datetime.strptime(woz_peildatum, '%Y-%m-%d').strftime('%d-%m-%Y')
-        #                 obj['attributes']['WOZ peildatum - Unit - Woonstad Rotterdam'] = woz_peildatum
 
         # Verwerk de objecten in batches met retry-logica
         for i in range(0, len(objects_data), batch_size):

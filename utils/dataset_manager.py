@@ -1,4 +1,3 @@
-import os
 import json
 import logging
 from pathlib import Path
@@ -8,120 +7,137 @@ import streamlit as st
 
 from utils.api_client import APIClient
 
+# Stel logging in op DEBUG-niveau zodat we uitgebreide informatie krijgen tijdens het uitvoeren van de code.
 logging.basicConfig(level=logging.DEBUG)
 
-def initialize_config_folder(project_root: str) -> Path:
-    """
-    Resolve the project root and ensure that the dataset configuration folder exists.
-    Debug logging is output to help trace the folder structure.
-    """
 
+def initialize_config_folder(project_root: Union[str, Path]) -> Path:
+    """
+    Zorgt ervoor dat de configuratiemap voor datasets bestaat.
+    Als de map nog niet bestaat, wordt deze aangemaakt.
+
+    :param project_root: De hoofdmap van het project (als een string of Path).
+    :return: Het Path-object dat verwijst naar de dataset configuratiemap.
+    """
+    # Zorg dat project_root een Path-object is (ook als het als string is doorgegeven)
+    if isinstance(project_root, str):
+        project_root = Path(project_root)
+
+    # Bepaal het pad naar de dataset configuratiemap
     config_folder = project_root / "dataset_config"
 
+    # Log informatie over de project root en het pad naar de configuratiemap
     logging.debug(f"Project root: {project_root}")
     logging.debug(f"Config folder path: {config_folder}")
 
+    # Als de configuratiemap niet bestaat, maak deze dan aan
     if not config_folder.exists():
         try:
-            logging.debug("Creating config folder...")
+            logging.debug("Configuratiemap bestaat niet. Wordt aangemaakt...")
             config_folder.mkdir(parents=True, exist_ok=True)
-            logging.debug(f"Successfully created config folder at: {config_folder}")
+            logging.debug(f"Configuratiemap succesvol aangemaakt op: {config_folder}")
         except Exception as e:
-            st.error(f"Failed to create config folder: {e}")
+            st.error(f"Fout bij het aanmaken van de configuratiemap: {e}")
     else:
-        logging.debug("Config folder exists. Contents:")
+        # Als de map al bestaat, log dan de inhoud van de map
+        logging.debug("Configuratiemap bestaat. Inhoud van de map:")
         try:
             for item in config_folder.iterdir():
-                item_type = "Directory" if item.is_dir() else "File"
+                # Bepaal of het item een map of een bestand is
+                item_type = "Map" if item.is_dir() else "Bestand"
                 logging.debug(f"- {item.name} ({item_type})")
         except Exception as e:
-            logging.error(f"Error listing config folder: {e}")
+            logging.error(f"Fout bij het weergeven van de inhoud van de configuratiemap: {e}")
+
     return config_folder
 
 
 class DatasetManager:
-    def __init__(self, project_root: Union[str, Path]) -> None:
-        # Allow config_folder to be passed as either a string or a Path.
-        self.project_root = Path(project_root) if isinstance(project_root, str) else project_root
-        self.config_folder = initialize_config_folder(self.project_root)
-        # self.config_folder = Path(config_folder) if isinstance(config_folder, str) else config_folder
-        self.api_client = self._initialize_api_client()
+    """
+    Deze klasse beheert de dataset configuraties.
+    Het zorgt ervoor dat de configuratiemap bestaat, laadt configuratiebestanden in
+    en biedt methoden om specifieke informatie uit deze configuraties op te halen.
+    """
 
-    def _initialize_config_folder(self) -> Path:
+    def __init__(self, project_root: Union[str, Path], api_client: APIClient) -> None:
         """
-        Resolve the project root and ensure that the dataset configuration folder exists.
-        Debug logging is output to help trace the folder structure.
+        Initialiseert de DatasetManager.
+
+        :param project_root: De hoofdmap van het project (als een string of Path).
+        :param api_client: Een instantie van APIClient voor API-communicatie.
         """
-
-        config_folder = self.project_root / "dataset_config"
-
-        logging.debug(f"Project root: {self.project_root}")
-        logging.debug(f"Config folder path: {config_folder}")
-
-        if not config_folder.exists():
-            try:
-                logging.debug("Creating config folder...")
-                config_folder.mkdir(parents=True, exist_ok=True)
-                logging.debug(f"Successfully created config folder at: {config_folder}")
-            except Exception as e:
-                st.error(f"Failed to create config folder: {e}")
+        # Zorg dat project_root een Path-object is
+        if isinstance(project_root, str):
+            self.project_root = Path(project_root)
         else:
-            logging.debug("Config folder exists. Contents:")
-            try:
-                for item in config_folder.iterdir():
-                    item_type = "Directory" if item.is_dir() else "File"
-                    logging.debug(f"- {item.name} ({item_type})")
-            except Exception as e:
-                logging.error(f"Error listing config folder: {e}")
-        return config_folder
+            self.project_root = project_root
 
-    def _initialize_api_client(self) -> APIClient:
-        # You can switch between test and production credentials by commenting/uncommenting below.
-        # client_id = os.getenv("LUXS_ACCEPT_CLIENT_ID")
-        # client_secret = os.getenv("LUXS_ACCEPT_CLIENT_SECRET")
-        # base_url = "https://api.accept.luxsinsights.com"
-
-        client_id = os.getenv("LUXS_PROD_CLIENT_ID")
-        client_secret = os.getenv("LUXS_PROD_CLIENT_SECRET")
-        base_url = os.getenv("LUXS_PROD_BASE_URL")
-        token_url = os.getenv("LUXS_PROD_TOKEN_URL")
-
-        return APIClient(client_id=client_id, client_secret=client_secret, base_url=base_url, token_url=token_url)
+        # Initialiseer de configuratiemap met behulp van de centrale functie
+        self.config_folder = initialize_config_folder(self.project_root)
+        self.api_client = api_client
 
     def _load_configs(self) -> List[Dict[str, Any]]:
-        """Load all JSON config files from the configuration folder."""
+        """
+        Laad alle JSON-configuratiebestanden uit de configuratiemap.
+
+        :return: Een lijst van dictionaries, waarbij elk dictionary één configuratie voorstelt.
+        """
         configs = []
+        # Zoek naar alle .json bestanden in de configuratiemap
         for config_file in self.config_folder.glob("*.json"):
             try:
+                # Lees de inhoud van het JSON-bestand en zet deze om in een dictionary
                 data = json.loads(config_file.read_text(encoding="utf-8"))
-                # Save the filename (without extension) for later use.
+                # Voeg de bestandsnaam (zonder extensie) toe aan de dictionary voor later gebruik
                 data["__filename__"] = config_file.stem
                 configs.append(data)
             except Exception as e:
-                logging.error(f"Error reading config file {config_file}: {e}")
+                logging.error(f"Fout bij het lezen van configuratiebestand {config_file}: {e}")
         return configs
 
     def get_available_datasets(self) -> List[str]:
+        """
+        Haal een lijst op met de namen van alle beschikbare datasets.
+
+        :return: Een lijst met dataset namen.
+        """
         configs = self._load_configs()
-        # Prepend a selection prompt to the list.
+        # Haal uit elke configuratie de waarde op van de sleutel "dataset" (indien aanwezig)
         datasets = [cfg.get("dataset") for cfg in configs if "dataset" in cfg]
         return datasets
 
     def get_dataset_config(self, dataset_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Zoek en retourneer de configuratie voor een specifieke dataset.
+
+        :param dataset_name: De naam van de dataset.
+        :return: De configuratie als dictionary, of None als deze niet gevonden is.
+        """
         for cfg in self._load_configs():
             if cfg.get("dataset") == dataset_name:
                 return cfg
         return None
 
     def get_object_type(self, dataset_name: str) -> Optional[str]:
+        """
+        Haal het objecttype op voor een specifieke dataset.
+
+        :param dataset_name: De naam van de dataset.
+        :return: Het objecttype als string, of None als niet gevonden.
+        """
         for cfg in self._load_configs():
             if cfg.get("dataset") == dataset_name:
                 return cfg.get("objectType")
         return None
 
     def get_file_name(self, dataset_name: str) -> Optional[str]:
+        """
+        Haal de bestandsnaam (zonder extensie) op voor de configuratie van een specifieke dataset.
+
+        :param dataset_name: De naam van de dataset.
+        :return: De bestandsnaam als string, of None als niet gevonden.
+        """
         for cfg in self._load_configs():
             if cfg.get("dataset") == dataset_name:
-                # Return the filename stored in the config (without .json)
                 return cfg.get("__filename__")
         return None

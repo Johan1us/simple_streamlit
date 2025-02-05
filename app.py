@@ -5,8 +5,10 @@ import time
 
 # Importeer functies voor het laden van CSS en het tonen van de juiste pagina's
 from utils.css_loader import load_css
-from pages.home import show_home
+from pages.home import VIPDataMakelaarApp
+
 from pages.login import show_login
+
 
 # Stel logging in op INFO-niveau zodat belangrijke informatie gelogd wordt (voor ontwikkelaars)
 logging.basicConfig(level=logging.INFO)
@@ -30,7 +32,8 @@ if "logged_in" not in st.session_state:
 # 4. Toon de juiste pagina op basis van de login status
 if st.session_state.get("logged_in"):
     # Als de gebruiker ingelogd is, toon dan de hoofdpagina
-    show_home()
+    app = VIPDataMakelaarApp()
+    app.run()
 else:
     # Als de gebruiker niet ingelogd is, toon dan het inlogscherm
     show_login()
