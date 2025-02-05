@@ -1,17 +1,10 @@
-import os
-import json
 import logging
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 import streamlit as st
 
-from vip_datamakelaar.utils.api_client import APIClient
-from vip_datamakelaar.utils.excel_utils import ExcelHandler
-from vip_datamakelaar.utils.validation import ExcelValidator
-from utils.dataset_manager import DatasetManager
-from utils.data_type_mapper import DataTypeMapper
+
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -48,7 +41,7 @@ class DataTypeMapper:
     def __init__(self, metadata_map: Dict[str, Any]):
         self.metadata_map = metadata_map
 
-    def convert_value(self, col: str, api_field: str, value: Any, field_metadata: Dict[str, Any]) -> Optional[
+    def convert_value(self, value: Any, field_metadata: Dict[str, Any]) -> Optional[
         Union[int, str]]:
         """
         Convert a value based on its metadata type and format.
