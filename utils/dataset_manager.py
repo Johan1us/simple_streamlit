@@ -83,9 +83,10 @@ class DatasetManager:
 
         client_id = os.getenv("LUXS_PROD_CLIENT_ID")
         client_secret = os.getenv("LUXS_PROD_CLIENT_SECRET")
-        base_url = "https://api.prod.luxsinsights.com"
+        base_url = os.getenv("LUXS_PROD_BASE_URL")
+        token_url = os.getenv("LUXS_PROD_TOKEN_URL")
 
-        return APIClient(client_id=client_id, client_secret=client_secret, base_url=base_url)
+        return APIClient(client_id=client_id, client_secret=client_secret, base_url=base_url, token_url=token_url)
 
     def _load_configs(self) -> List[Dict[str, Any]]:
         """Load all JSON config files from the configuration folder."""

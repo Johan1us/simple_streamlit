@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-
+import os
 import pandas as pd
 import streamlit as st
 
@@ -8,6 +8,7 @@ import streamlit as st
 from utils.dataset_manager import DatasetManager
 from utils.excel_upload import handle_excel_upload
 from utils.excel_download import handle_excel_download
+from utils.api_client import APIClient
 
 # Stel logging in op DEBUG-niveau voor gedetailleerde informatie (voor ontwikkelaars)
 logging.basicConfig(level=logging.DEBUG)
@@ -109,6 +110,13 @@ def show_home() -> None:
       2. Downloaden van een Excel-bestand op basis van de dataset.
       3. Uploaden van een Excel-bestand.
     """
+    client_id = os.getenv("LUXS_PROD_CLIENT_ID")
+    client_secret = os.getenv("LUXS_PROD_CLIENT_SECRET")
+    base_url = os.getenv("LUXS_PROD_BASE_URL")
+    token_url = os.getenv("LUXS_PROD_TOKEN_URL")
+
+    api_client = APIClient(client_id=client_id, client_secret=client_secret, base_url=base_url, token_url=token_url)
+
     # Toon de uitlog-knop en verkrijg de kolom waar de titel in komt
     titel_kolom = toon_uitlog_knop()
     with titel_kolom:

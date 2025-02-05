@@ -6,8 +6,8 @@ import streamlit as st
 
 from vip_datamakelaar.utils.validation import ExcelValidator
 from utils.dataset_manager import DatasetManager
-from utils.data_type_mapper import DataTypeMapper
-from utils.metadata_handler import build_metadata_map
+# from utils.data_type_mapper import DataTypeMapper
+from utils.metadata_handler import build_metadata_map, DataTypeMapper
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -31,7 +31,7 @@ def prepare_data_to_send(
         for col, api_field in columns_mapping.items():
             original_value = row[col]
             field_metadata = metadata_map.get(api_field, {})
-            new_value = type_mapper.convert_value(col, api_field, original_value, field_metadata)
+            new_value = type_mapper.convert_value(original_value, field_metadata)
             attributes[api_field] = new_value
 
         data_to_send.append({
