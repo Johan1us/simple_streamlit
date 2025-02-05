@@ -4,30 +4,23 @@ import time
 import requests
 from typing import Optional, List, Dict, Any, Union
 from dotenv import load_dotenv
-from datetime import datetime
+
+# Laad omgevingsvariabelen uit een .env-bestand (als dat aanwezig is)
 load_dotenv()
-
-from attr import attributes
-
-# CLIENT_ID = os.getenv("LUXS_ACCEPT_CLIENT_ID")
-# CLIENT_SECRET = os.getenv("LUXS_ACCEPT_CLIENT_SECRET")
-# print(f"Client ID: {CLIENT_ID}")
-# print(f"Client Secret: {CLIENT_SECRET}")
 
 
 class APIClient:
     """
-    Deze klasse beheert het ophalen en gebruiken van OAuth2 tokens
-    en het uitvoeren van verzoeken naar de Luxs Insights API.
+    Deze klasse verzorgt de communicatie met de Luxs Insights API via OAuth2.
 
     Belangrijkste functionaliteiten:
-    - Automatisch ophalen en verversen van OAuth2 tokens.
-    - Ophalen van metadata en objectgegevens.
-    - Upsert en update van objecten.
+      - Automatisch ophalen en vernieuwen van OAuth2 tokens.
+      - Ophalen van metadata en objectgegevens.
+      - Upsert (toevoegen of bijwerken) en update van objecten.
     """
 
     def __init__(self, client_id: str, client_secret: str,
-                 base_url: str = "https://api.accept.luxsinsights.com") -> None:
+                 base_url: str, token_url: str) -> None:
         """
         Initialiseer de APIClient met de benodigde client credentials en basis-URL.
 
@@ -39,20 +32,22 @@ class APIClient:
         """
         self.client_id = client_id
         self.client_secret = client_secret
-
         self.base_url = base_url
+        self.token_url = token_url
         self.token: Optional[str] = None
-        self.token_expires_at: float = 0.0  # Unix timestamp wanneer token verloopt
+        self.token_expires_at: float = 0.0  # Unix-timestamp waarop het token verloopt
 
     def _get_token(self) -> None:
         """
-        Haal een nieuw OAuth2-token op middels de client credentials.
+        Haal een nieuw OAuth2-token op via de client credentials.
 
-        Deze functie doet een POST-request naar de token endpoint
-        en slaat het verkregen access_token en de verloopdatum op.
+        Deze methode verstuurt een POST-verzoek naar de token endpoint en slaat
+        het verkregen access token en de vervaltijd op.
         """
-        # token_url = "https://auth.accept.luxsinsights.com/oauth2/token"
-        token_url = "https://auth.prod.luxsinsights.com/oauth2/token"
+        # Gebruik de productie endpoint voor het ophalen van het token
+        token_url = self.token_url
+
+
         print(f"DEBUG: token_url: {token_url}")
 
         data = {
@@ -60,31 +55,31 @@ class APIClient:
             "client_id": self.client_id,
             "client_secret": self.client_secret
         }
-        
+
         response = requests.post(token_url, data=data)
-        
-        response.raise_for_status()
+        response.raise_for_status()  # Gooi een error als de statuscode niet 200 is
 
         token_data = response.json()
         self.token = token_data["access_token"]
-        # 'expires_in' komt vaak als seconden; standaard op 3600 (1 uur) als niet aanwezig.
+        # 'expires_in' geeft de geldigheidsduur in seconden; gebruik 3600 als standaard
         expires_in = token_data.get("expires_in", 3600)
         self.token_expires_at = time.time() + expires_in
 
     def _ensure_token(self) -> None:
         """
-        Controleer of het huidige token nog geldig is.
-        Als het token niet bestaat of is verlopen, vraag dan een nieuw token aan.
+        Zorg ervoor dat er een geldig token beschikbaar is.
+
+        Als het huidige token niet bestaat of verlopen is, wordt er een nieuw token opgehaald.
         """
         if self.token is None or time.time() > self.token_expires_at:
             self._get_token()
 
     def _headers(self) -> Dict[str, str]:
         """
-        Bouw de headers voor een API-request, inclusief het Bearer token.
+        Bouw de HTTP-headers voor een API-request, inclusief de Authorization header.
 
         Returns:
-            Dict[str, str]: Een dictionary met HTTP-headers.
+            Dict[str, str]: Een dictionary met de benodigde HTTP-headers.
         """
         self._ensure_token()
         return {
@@ -94,31 +89,25 @@ class APIClient:
 
     def test_client(self) -> Dict[str, str]:
         """
-        Test of de client_id en client_secret correct zijn door
-        een geldige token-header te retourneren.
+        Test of de client_id en client_secret correct zijn door geldige headers te retourneren.
 
         Returns:
-            Dict[str, str]: Headers met geldige OAuth2 token.
+            Dict[str, str]: De headers met een geldig OAuth2-token.
         """
         self._ensure_token()
-        return {
-            "Authorization": f"Bearer {self.token}",
-            "Content-Type": "application/json"
-        }
+        return self._headers()
 
     def get_metadata(self, object_type: Optional[str] = None) -> Any:
         """
-        Haalt metadata op van alle beschikbare objecttypes, of filtert indien
-        een object_type is opgegeven.
+        Haal metadata op van alle objecttypes, of filter op een specifiek objecttype.
 
         Args:
-            object_type (str, optional): Het type object waarvoor metadata moet worden opgehaald.
+            object_type (Optional[str]): (Optioneel) Specifiek objecttype waarvan metadata wordt opgehaald.
 
         Returns:
-            Any: De JSON-respons van de metadata endpoint.
+            Any: De JSON-respons met de metadata.
         """
-        # Opbouwen van de URL en query parameters
-        url = f"{self.base_url}/v1/metadata"
+        url = f"{self.base_url}v1/metadata"
         params: Dict[str, str] = {}
         if object_type:
             params["objectType"] = object_type
@@ -126,19 +115,19 @@ class APIClient:
         try:
             response = requests.get(url, headers=self._headers(), params=params)
 
-            # If we got a 500 error, try without object_type parameter
+            # Als er een 500-error optreedt en er is een objectType meegegeven, probeer dan opnieuw zonder filter
             if response.status_code == 500 and object_type:
-                print("[DEBUG] 500 error received, trying without objectType parameter...")
+                print("[DEBUG] 500 error ontvangen, opnieuw proberen zonder objectType parameter...")
                 response = requests.get(url, headers=self._headers())
-                print(f"[DEBUG] Second attempt status code: {response.status_code}")
+                print(f"[DEBUG] Tweede poging status code: {response.status_code}")
 
             response.raise_for_status()
             return response.json()
-            
+
         except requests.exceptions.RequestException as e:
-            print(f"[ERROR] Request failed: {str(e)}")
-            print(f"[ERROR] URL attempted: {url}")
-            print(f"[ERROR] Headers sent: {self._headers()}")
+            print(f"[ERROR] Request mislukt: {str(e)}")
+            print(f"[ERROR] URL geprobeerd: {url}")
+            print(f"[ERROR] Verzonden headers: {self._headers()}")
             raise
 
     def get_objects(
@@ -151,49 +140,41 @@ class APIClient:
             page_size: int = 50
     ) -> Dict[str, Any]:
         """
-        Haalt een pagina objecten op van een bepaald objectType. Eventueel kan worden gefilterd
-        op identificatie en kunnen specifieke attributen worden opgevraagd.
+        Haal een pagina objecten op van een bepaald objecttype.
 
         Args:
-            object_type (str): Type van het object dat moet worden opgehaald.
-            attributes (List[str], optional): Lijst met specifieke attributen om op te halen.
-            identifier (str, optional): Specifieke identifier om op te filteren.
-            only_active (bool, optional): Alleen actieve objecten ophalen.
-            page (int, optional): Paginanummer.
-            page_size (int, optional): Aantal items per pagina.
+            object_type (str): Het type object dat moet worden opgehaald.
+            attributes (Optional[List[str]]): Specifieke attributen om op te halen.
+            identifier (Optional[str]): Filter op een specifieke identifier.
+            only_active (bool): Alleen actieve objecten ophalen.
+            page (int): Paginanummer.
+            page_size (int): Aantal objecten per pagina.
 
         Returns:
             Dict[str, Any]: De JSON-respons van de API met objecten.
         """
         url = f"{self.base_url}/v1/objects/filterByObjectType"
-
-        # Query parameters opbouwen
         params: Dict[str, Union[str, int, bool, List[str]]] = {
             "objectType": object_type,
-            "onlyActive": str(only_active).lower(),  # API verwacht 'true' of 'false' als string
+            "onlyActive": str(only_active).lower(),  # De API verwacht 'true' of 'false' als string
             "page": page,
             "pageSize": page_size
         }
         if attributes:
-            # De API kan mogelijk een list verwerken, of anders comma-separatie
-            # Op basis van documentatie lijkt een lijst direct meegeven mogelijk.
             params["attributes"] = attributes
         if identifier:
             params["identifier"] = identifier
 
-        # Request uitvoeren
         print(f"[DEBUG] Ophalen objecten van type '{object_type}'")
         print(f"[DEBUG] URL: {url}")
         print(f"[DEBUG] Headers: {self._headers()}")
         print(f"[DEBUG] Params: {params}")
+
         response = requests.get(url, headers=self._headers(), params=params)
         response.raise_for_status()
 
         data = response.json()
-
-        # Zorg voor een consistente return-structuur
-        # Soms geeft de API een lijst terug, soms een dict. Als het een lijst is,
-        # wrap deze dan in een standaard dict-structuur.
+        # Indien de API een lijst teruggeeft, wrapper deze dan in een dict
         if isinstance(data, list):
             return {
                 "objects": data,
@@ -213,44 +194,44 @@ class APIClient:
             st=None,
     ) -> Dict[str, Any]:
         """
-        Haalt alle objecten op van een bepaald objectType, over alle beschikbare pagina's heen.
+        Haal alle objecten op van een bepaald objecttype over alle beschikbare pagina's heen.
 
         Deze methode:
-        1. Haalt eerst de eerste pagina op.
-        2. Leest daaruit af hoeveel totale pagina's er zijn.
-        3. Haalt vervolgens, indien nodig, alle resterende pagina's op.
-        4. Retourneert één gecombineerd resultaat met alle objecten.
+          1. Haalt de eerste pagina op.
+          2. Blijft pagina's ophalen totdat er minder objecten dan 'page_size' worden teruggegeven.
+          3. Combineert alle objecten in één resultaat.
 
         Args:
             object_type (str): Het type object dat moet worden opgehaald.
-            attributes (List[str], optional): Lijst met specifieke attributen om op te halen.
-            identifier (str, optional): Specifieke identifier om op te filteren.
-            only_active (bool, optional): Alleen actieve objecten ophalen.
-            page_size (int, optional): Aantal items per pagina, standaard 50.
+            attributes (Optional[List[str]]): Specifieke attributen om op te halen.
+            identifier (Optional[str]): Filter op een specifieke identifier.
+            only_active (bool): Alleen actieve objecten ophalen.
+            page_size (int): Aantal objecten per pagina.
+            st: (Optioneel) Streamlit module voor visuele feedback.
 
         Returns:
-            Dict[str, Any]: De JSON-respons met alle objecten, waarin:
-                            - "objects": lijst met alle opgehaalde objecten
-                            - "totalCount": totaal aantal opgehaalde objecten
-                            - "totalPages": aantal pagina's dat is opgehaald
-                            - "pageSize": het gebruikte paginaformaat
+            Dict[str, Any]: Een dictionary met:
+                            - "objects": de gecombineerde lijst van objecten,
+                            - "totalCount": het totaal aantal objecten,
+                            - "pageSize": de gebruikte page_size.
         """
-        status_objects = st.empty()
-        status_totals = st.empty()
-        status_time = st.empty()
+        # Indien st (Streamlit) is meegegeven, maak dan lege feedback-elementen
+        status_objects = st.empty() if st is not None else None
+        status_totals = st.empty() if st is not None else None
+        status_time = st.empty() if st is not None else None
+
         def feedback():
             if st is not None:
                 status_objects.info(f"Batch {current_page + 1} met {len(current_page_objects)} objecten opgehaald")
                 status_totals.info(f"Totaal aantal objecten nu: {len(all_objects)}")
                 status_time.info(f"Ophalen duurde in totaal {time.time() - start_time:.2f} seconden")
 
-
         start_time = time.time()
         all_objects = []
         current_page = 0
 
         while True:
-            # Haal de huidige pagina op
+            # Haal een pagina objecten op
             resp = self.get_objects(
                 object_type=object_type,
                 attributes=attributes,
@@ -260,7 +241,6 @@ class APIClient:
                 page_size=page_size
             )
 
-            # Haal objecten van de huidige pagina
             current_page_objects = resp.get("objects", [])
             all_objects.extend(current_page_objects)
             print(f"[DEBUG] Ophalen duurde {time.time() - start_time:.2f} seconden")
@@ -268,11 +248,10 @@ class APIClient:
             print(f"[DEBUG] Totaal aantal objecten nu: {len(all_objects)}")
             feedback()
 
-            # Controleer of we klaar zijn: minder objecten dan page_size betekent laatste pagina
+            # Als er minder objecten zijn opgehaald dan 'page_size', is dit de laatste pagina
             if len(current_page_objects) < page_size:
                 break
 
-            # Ga naar de volgende pagina
             current_page += 1
 
         print(f"[DEBUG] Ophalen van alle objecten duurde {time.time() - start_time:.2f} seconden")
@@ -284,12 +263,10 @@ class APIClient:
 
     def upsert_objects(self, objects_data: List[Dict[str, Any]]) -> Any:
         """
-        Voeg nieuwe objecten toe of update bestaande objecten.
-        POST /v1/objects
+        Voeg nieuwe objecten toe of werk bestaande objecten bij via een POST-request.
 
         Args:
-            objects_data (List[Dict[str, Any]]): Een lijst met objectdefinities
-                                                 om toe te voegen of te updaten.
+            objects_data (List[Dict[str, Any]]): Lijst met objectdefinities om toe te voegen of bij te werken.
 
         Returns:
             Any: De JSON-respons van de API.
@@ -300,56 +277,63 @@ class APIClient:
         response.raise_for_status()
         return response.json()
 
-    def update_objects(self, objects_data: List[Dict[str, Any]], batch_size: int = 100, timeout: int = 300, max_retries: int = 3) -> Any:
+    def update_objects(self,
+                       objects_data: List[Dict[str, Any]],
+                       batch_size: int = 100,
+                       timeout: int = 300,
+                       max_retries: int = 3) -> Any:
         """
-        Update bestaande objecten in batches om timeouts te voorkomen.
-        PUT /v1/objects
+        Update bestaande objecten in batches om timeouts te voorkomen via een PUT-request.
 
         Args:
-            objects_data: Lijst met object definities om te updaten
-            batch_size: Aantal objecten per batch (default 100)
-            timeout: Timeout in seconden per request (default 300)
-            max_retries: Maximaal aantal pogingen per batch (default 3)
+            objects_data (List[Dict[str, Any]]): Lijst met objectdefinities om bij te werken.
+            batch_size (int): Aantal objecten per batch (standaard 100).
+            timeout (int): Timeout in seconden per request (standaard 300).
+            max_retries (int): Maximaal aantal pogingen per batch (standaard 3).
 
         Returns:
-            Dict met gecombineerde resultaten van alle batches
+            Dict[str, Any]: Een dictionary met de gecombineerde resultaten van alle batches.
         """
         url = f"{self.base_url}/v1/objects"
         response_json_list = []
 
-        # Debug info over totale update
         print(f"[DEBUG] Start update van {len(objects_data)} objecten in batches van {batch_size}")
         print(f"[DEBUG] Timeout per request: {timeout} seconden")
-        
-        # Jaar conversie
-        for obj in objects_data:
-            if 'attributes' in obj and 'Jaar laatste gevelonderhoud - Gevels - Woonstad Rotterdam' in obj['attributes']:
-                jaar = obj['attributes']['Jaar laatste gevelonderhoud - Gevels - Woonstad Rotterdam']
-                if jaar is not None and isinstance(jaar, (str, float)):
-                    obj['attributes']['Jaar laatste gevelonderhoud - Gevels - Woonstad Rotterdam'] = int(float(jaar))
-            if 'attributes' in obj and 'Jaar laatste dakonderhoud - Building - Woonstad Rotterdam' in obj['attributes']:
-                jaar = obj['attributes']['Jaar laatste dakonderhoud - Building - Woonstad Rotterdam']
-                if jaar is not None and isinstance(jaar, (str, float)):
-                    obj['attributes']['Jaar laatste dakonderhoud - Building - Woonstad Rotterdam'] = int(float(jaar))
-            if 'attributes' in obj and 'WOZ waarde - Unit - Woonstad Rotterdam' in obj['attributes']:
-                woz = obj['attributes']['WOZ waarde - Unit - Woonstad Rotterdam']
-                if woz is not None and isinstance(woz, (str, float)):
-                    obj['attributes']['WOZ waarde - Unit - Woonstad Rotterdam'] = int(float(woz))
-            if 'attributes' in obj and 'WOZ peildatum - Unit - Woonstad Rotterdam' in obj['attributes']:
-                woz_peildatum = obj['attributes']['WOZ peildatum - Unit - Woonstad Rotterdam']
-                # Convert '2023-01-01' to date 01-01-2023
-                if woz_peildatum is not None and isinstance(woz_peildatum, str):
-                    woz_peildatum = datetime.strptime(woz_peildatum, '%Y-%m-%d').strftime('%d-%m-%Y')
-                    obj['attributes']['WOZ peildatum - Unit - Woonstad Rotterdam'] = woz_peildatum
 
+        # # Converteer specifieke attributen naar het juiste formaat
+        # for obj in objects_data:
+        #     if 'attributes' in obj:
+        #         # Converteer "Jaar laatste gevelonderhoud" naar een integer
+        #         if 'Jaar laatste gevelonderhoud - Gevels - Woonstad Rotterdam' in obj['attributes']:
+        #             jaar = obj['attributes']['Jaar laatste gevelonderhoud - Gevels - Woonstad Rotterdam']
+        #             if jaar is not None and isinstance(jaar, (str, float)):
+        #                 obj['attributes']['Jaar laatste gevelonderhoud - Gevels - Woonstad Rotterdam'] = int(
+        #                     float(jaar))
+        #         # Converteer "Jaar laatste dakonderhoud" naar een integer
+        #         if 'Jaar laatste dakonderhoud - Building - Woonstad Rotterdam' in obj['attributes']:
+        #             jaar = obj['attributes']['Jaar laatste dakonderhoud - Building - Woonstad Rotterdam']
+        #             if jaar is not None and isinstance(jaar, (str, float)):
+        #                 obj['attributes']['Jaar laatste dakonderhoud - Building - Woonstad Rotterdam'] = int(
+        #                     float(jaar))
+        #         # Converteer "WOZ waarde" naar een integer
+        #         if 'WOZ waarde - Unit - Woonstad Rotterdam' in obj['attributes']:
+        #             woz = obj['attributes']['WOZ waarde - Unit - Woonstad Rotterdam']
+        #             if woz is not None and isinstance(woz, (str, float)):
+        #                 obj['attributes']['WOZ waarde - Unit - Woonstad Rotterdam'] = int(float(woz))
+        #         # Converteer "WOZ peildatum" naar het gewenste datumformaat (DD-MM-YYYY)
+        #         if 'WOZ peildatum - Unit - Woonstad Rotterdam' in obj['attributes']:
+        #             woz_peildatum = obj['attributes']['WOZ peildatum - Unit - Woonstad Rotterdam']
+        #             if woz_peildatum is not None and isinstance(woz_peildatum, str):
+        #                 # Converteer bijvoorbeeld '2023-01-01' naar '01-01-2023'
+        #                 woz_peildatum = datetime.strptime(woz_peildatum, '%Y-%m-%d').strftime('%d-%m-%Y')
+        #                 obj['attributes']['WOZ peildatum - Unit - Woonstad Rotterdam'] = woz_peildatum
 
-
-        # Process in batches with retry logic
+        # Verwerk de objecten in batches met retry-logica
         for i in range(0, len(objects_data), batch_size):
             batch = objects_data[i:i + batch_size]
             batch_num = i // batch_size + 1
-            total_batches = len(objects_data) // batch_size + 1
-            
+            total_batches = (len(objects_data) + batch_size - 1) // batch_size  # Correcte berekening
+
             for retry in range(max_retries):
                 try:
                     print(f"[DEBUG] Verwerken batch {batch_num}/{total_batches} (poging {retry + 1}/{max_retries})")
@@ -368,19 +352,20 @@ class APIClient:
                         response_json_list.append(resp_json)
 
                     print(f"[DEBUG] Batch {batch_num} succesvol verwerkt: {len(batch)} objecten")
-                    break  # Succesvol, ga door naar volgende batch
+                    break  # Ga naar de volgende batch als deze batch succesvol is verwerkt
 
                 except (requests.Timeout, requests.ConnectionError) as e:
-                    print(f"[WARNING] Timeout/Connection error bij batch {batch_num}, poging {retry + 1}: {str(e)}")
-                    if retry == max_retries - 1:  # Laatste poging
-                        print(f"[ERROR] Batch {batch_num} gefaald na {max_retries} pogingen")
+                    print(f"[WARNING] Timeout/Connectiefout bij batch {batch_num}, poging {retry + 1}: {str(e)}")
+                    if retry == max_retries - 1:
+                        print(f"[ERROR] Batch {batch_num} mislukt na {max_retries} pogingen")
                         raise
-                    time.sleep(5 * (retry + 1))  # Exponentiële backoff
+                    time.sleep(5 * (retry + 1))  # Wacht even (exponentiële backoff) voordat opnieuw geprobeerd wordt
 
                 except requests.RequestException as e:
                     print(f"[ERROR] Fout bij verwerken batch {batch_num}: {str(e)}")
                     print(f"[DEBUG] Response status: {e.response.status_code if hasattr(e, 'response') else 'Unknown'}")
-                    print(f"[DEBUG] Response content: {e.response.text[:200] if hasattr(e, 'response') else 'Unknown'}...")
+                    print(
+                        f"[DEBUG] Response content: {e.response.text[:200] if hasattr(e, 'response') else 'Unknown'}...")
                     raise
 
         return {
@@ -389,47 +374,49 @@ class APIClient:
         }
 
 
+# --- Testblok voor de APIClient ---
 if __name__ == "__main__":
-    # In dit blok testen we de functionaliteiten van onze APIClient.
-    # Dit is handig voor debugging of om te verifiëren dat de authenticatie werkt.
+    # Dit blok wordt uitgevoerd als het script direct wordt gestart.
+    # Hier testen we de functionaliteiten van de APIClient.
 
-    # Haal de client credentials op uit omgevingsvariabelen
-    client_id = os.getenv("LUXS_ACCEPT_CLIENT_ID", "dummy_client_id")
-    client_secret = os.getenv("LUXS_ACCEPT_CLIENT_SECRET", "dummy_client_secret")
-    base_url = "https://api.accept.luxsinsights.com"
+    # Haal de client credentials op uit de omgevingsvariabelen (of gebruik dummy-waarden)
+    client_id = os.getenv("LUXS_PROD_CLIENT_ID", "dummy_client_id")
+    client_secret = os.getenv("LUXS_PROD_CLIENT_SECRET", "dummy_client_secret")
+    base_url = os.getenv("LUXS_PROD_BASE_URL", "https://api.accept.luxsinsights.com")
+    token_url = os.getenv("LUXS_PROD_TOKEN_URL", "https://api.accept.luxsinsights.com/oauth/token")
 
     print("[DEBUG] Initialiseren APIClient met:")
     print(f"        Client ID: {client_id}")
     print(f"        Client Secret: {client_secret}")
     print(f"        Base URL: {base_url}")
 
-    api_client = APIClient(client_id=client_id, client_secret=client_secret, base_url=base_url)
+    # Maak een instantie van de APIClient
+    api_client = APIClient(client_id=client_id, client_secret=client_secret, base_url=base_url, token_url=token_url)
 
     # Test de client door de headers op te halen
     print("[DEBUG] Test client authenticatie headers:")
     print(api_client.test_client())
 
-    # Haal metadata op (bijvoorbeeld alle metadata)
+    # Haal metadata op en sla deze op in een bestand
     print("[DEBUG] Ophalen volledige metadata:")
     all_metadata = api_client.get_metadata()
-    # save maetadata to a file metadata.json
     with open('metadata.json', 'w') as f:
         json.dump(all_metadata, f)
-    print("[DEBUG] Metadata (eerste 200 chars):", str(all_metadata)[:200], "...")
+    print("[DEBUG] Metadata (eerste 200 tekens):", str(all_metadata)[:200], "...")
 
-    # Haal objecten op van een bepaald type (bijv. Building)
+    # Haal objecten op van een bepaald type, bijvoorbeeld 'Building'
     print("[DEBUG] Ophalen objecten van type 'Building':")
-    attributes = ["Dakpartner - Building - Woonstad Rotterdam", "Jaar laatste dakonderhoud - Building - Woonstad Rotterdam"]
+    attributes = ["Dakpartner - Building - Woonstad Rotterdam",
+                  "Jaar laatste dakonderhoud - Building - Woonstad Rotterdam"]
     building_objects = api_client.get_objects(object_type="Building", attributes=attributes, only_active=True)
-    # Print de eerste 5 objecten voor inspectie
     print("[DEBUG] Eerste 5 objecten:")
-    for obj in building_objects["objects"][:5]:
+    for obj in building_objects.get("objects", [])[:5]:
         print(obj)
 
-    # Haal alle objecten op van een bepaald type (bijv. Building)
+    # Haal alle objecten op van het type 'Building' en toon het totaal aantal
     print("[DEBUG] Ophalen alle objecten van type 'Building':")
     all_building_objects = api_client.get_all_objects(object_type="Building", attributes=attributes, only_active=True)
-    print("[DEBUG] Aantal objecten:", all_building_objects["totalCount"])
+    print("[DEBUG] Aantal objecten:", all_building_objects.get("totalCount", 0))
     print("[DEBUG] Eerste 5 objecten:")
-    for obj in all_building_objects["objects"][:5]:
+    for obj in all_building_objects.get("objects", [])[:5]:
         print(obj)
