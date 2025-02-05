@@ -33,7 +33,7 @@ if "logged_in" not in st.session_state:
 if st.session_state.get("logged_in"):
     # Als de gebruiker ingelogd is, toon dan de hoofdpagina
     app = VIPDataMakelaarApp()
-    app.run()
+    app.start()
 else:
     # Als de gebruiker niet ingelogd is, toon dan het inlogscherm
     show_login()

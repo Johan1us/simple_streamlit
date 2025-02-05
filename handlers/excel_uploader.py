@@ -5,7 +5,7 @@ import streamlit as st
 
 # Importeer de benodigde helpers en API-client
 from utils.metadata_handler import build_metadata_map, DataTypeMapper
-from utils.dataset_manager import DatasetManager
+from utils.dataset_config import DatasetConfig
 from utils.validation import ExcelValidator
 
 # Stel logging in op DEBUG-niveau voor gedetailleerde informatie
@@ -37,13 +37,13 @@ class ExcelUploadStep2:
     datumformaat mapping.
     """
 
-    def __init__(self, config: Dict[str, Any], dataset_manager: DatasetManager):
+    def __init__(self, config: Dict[str, Any], dataset_config: DatasetConfig):
         self.config = config
-        self.dataset_manager = dataset_manager
+        self.dataset_config = dataset_config
 
     def get_metadata_and_mappings(self) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, Any], Dict[str, Any]]:
         try:
-            metadata = self.dataset_manager.api_client.get_metadata(self.config["objectType"])
+            metadata = self.dataset_config.api_client.get_metadata(self.config["objectType"])
         except Exception as e:
             st.error(f"Error getting metadata: {e}")
             return {}, {}, {}, {}
@@ -121,17 +121,17 @@ class ExcelUploadStep4:
     Stap 4: Valideer de ingelezen Excel-data en toon de verwachte kolomtypes.
     """
 
-    def __init__(self, config: Dict[str, Any], dataset_manager: DatasetManager,
+    def __init__(self, config: Dict[str, Any], dataset_config: DatasetConfig,
                  selected_dataset: str, columns_mapping: Dict[str, str],
                  metadata: Dict[str, Any]):
         self.config = config
-        self.dataset_manager = dataset_manager
+        self.dataset_config = dataset_config
         self.selected_dataset = selected_dataset
         self.columns_mapping = columns_mapping
         self.metadata = metadata
 
     def validate_excel(self, df: pd.DataFrame) -> bool:
-        object_type_val = self.dataset_manager.get_object_type(self.selected_dataset)
+        object_type_val = self.dataset_config.get_object_type(self.selected_dataset)
         metadata_map = build_metadata_map(self.metadata, self.config)
         validator = ExcelValidator(
             metadata=metadata_map,
@@ -172,17 +172,17 @@ class ExcelUploadStep5:
     Stap 5: Bereid de gevalideerde data voor en upload deze naar de API.
     """
 
-    def __init__(self, config: Dict[str, Any], dataset_manager: DatasetManager,
+    def __init__(self, config: Dict[str, Any], dataset_config: DatasetConfig,
                  selected_dataset: str, columns_mapping: Dict[str, str],
                  metadata: Dict[str, Any]):
         self.config = config
-        self.dataset_manager = dataset_manager
+        self.dataset_config = dataset_config
         self.selected_dataset = selected_dataset
         self.columns_mapping = columns_mapping
         self.metadata = metadata
 
     def upload_data(self, df: pd.DataFrame) -> None:
-        object_type_val = self.dataset_manager.get_object_type(self.selected_dataset)
+        object_type_val = self.dataset_config.get_object_type(self.selected_dataset)
         metadata_map = build_metadata_map(self.metadata, self.config)
         # Vervang eventuele inf, -inf en NaN-waarden door None
         df_clean = df.replace([float("inf"), float("-inf"), float("nan")], None)
@@ -215,7 +215,7 @@ class ExcelUploadStep5:
 
     def _upload_to_vip(self, object_type: str, data_to_send: List[Dict[str, Any]]) -> None:
         try:
-            response = self.dataset_manager.api_client.update_objects(objects_data=data_to_send)
+            response = self.dataset_config.api_client.update_objects(objects_data=data_to_send)
             if response:
                 response_objects = response.get("objects", [])
                 failed_updates = [obj for obj in response_objects if not obj.get("success")]
@@ -248,9 +248,9 @@ class ExcelUploader:
       5. Upload de gevalideerde data naar de API
     """
 
-    def __init__(self, config: Dict[str, Any], dataset_manager: DatasetManager, selected_dataset: str):
+    def __init__(self, config: Dict[str, Any], dataset_config: DatasetConfig, selected_dataset: str):
         self.config = config
-        self.dataset_manager = dataset_manager
+        self.dataset_config = dataset_config
         self.selected_dataset = selected_dataset
 
     def process_upload(self) -> None:
@@ -261,7 +261,7 @@ class ExcelUploader:
             return
 
         # Stap 2: Haal metadata op en bouw mappings
-        step2 = ExcelUploadStep2(self.config, self.dataset_manager)
+        step2 = ExcelUploadStep2(self.config, self.dataset_config)
         metadata, columns_mapping, dtype_mapping, date_format_mapping = step2.get_metadata_and_mappings()
         if not metadata:
             return
@@ -272,12 +272,12 @@ class ExcelUploader:
         step3.show_preview(df)
 
         # Stap 4: Valideer de ingelezen Excel-data
-        step4 = ExcelUploadStep4(self.config, self.dataset_manager, self.selected_dataset, columns_mapping, metadata)
+        step4 = ExcelUploadStep4(self.config, self.dataset_config, self.selected_dataset, columns_mapping, metadata)
         if not step4.validate_excel(df):
             return
 
         # Stap 5: Upload de gevalideerde data als de gebruiker op de knop drukt
         if st.button("Upload naar VIP"):
-            step5 = ExcelUploadStep5(self.config, self.dataset_manager, self.selected_dataset, columns_mapping,
+            step5 = ExcelUploadStep5(self.config, self.dataset_config, self.selected_dataset, columns_mapping,
                                      metadata)
             step5.upload_data(df)

@@ -52,7 +52,7 @@ def initialize_config_folder(project_root: Union[str, Path]) -> Path:
     return config_folder
 
 
-class DatasetManager:
+class DatasetConfig:
     """
     Deze klasse beheert de dataset configuraties.
     Het zorgt ervoor dat de configuratiemap bestaat, laadt configuratiebestanden in
@@ -61,7 +61,7 @@ class DatasetManager:
 
     def __init__(self, project_root: Union[str, Path], api_client: APIClient) -> None:
         """
-        Initialiseert de DatasetManager.
+        Initialiseert de DatasetConfig.
 
         :param project_root: De hoofdmap van het project (als een string of Path).
         :param api_client: Een instantie van APIClient voor API-communicatie.

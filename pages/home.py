@@ -2,22 +2,18 @@ import logging
 import os
 from pathlib import Path
 
-
 import pandas as pd
 import streamlit as st
 
 # Importeer de benodigde helpers en API-client
 from utils.api_client import APIClient
-from utils.dataset_manager import DatasetManager
-
-
-# Stel logging in op DEBUG-niveau voor gedetailleerde informatie
-logging.basicConfig(level=logging.DEBUG)
-
+from utils.dataset_config import DatasetConfig
 from handlers.excel_uploader import ExcelUploader
 from handlers.excel_downloader import ExcelDownloader
 
 
+# Stel logging in op DEBUG-niveau voor gedetailleerde informatie
+logging.basicConfig(level=logging.DEBUG)
 
 class VIPDataMakelaarApp:
     """
@@ -43,12 +39,12 @@ class VIPDataMakelaarApp:
             token_url=token_url
         )
 
-        # Bepaal het projectpad en initialiseer de DatasetManager
+        # Bepaal het projectpad en initialiseer de DatasetConfig
         huidige_map = Path(__file__).resolve().parent
         project_root = huidige_map.parent
-        self.dataset_manager = DatasetManager(project_root, self.api_client)
+        self.dataset_manager = DatasetConfig(project_root, self.api_client)
 
-    def run(self) -> None:
+    def start(self) -> None:
         """
         Voer de applicatie uit met de drie hoofdstappen.
         """
@@ -57,16 +53,16 @@ class VIPDataMakelaarApp:
             st.title("VIP DataMakelaar")
 
         st.header("Stap 1: Selecteer een dataset")
-        selected_dataset = self._selecteer_dataset()
+        geselecteerde_dataset = self._selecteer_dataset()
 
-        if selected_dataset and selected_dataset != "Selecteer dataset":
-            config = self.dataset_manager.get_dataset_config(selected_dataset)
-            if config:
-                self._toon_dataset_velden(config)
+        if geselecteerde_dataset and geselecteerde_dataset != "Selecteer dataset":
+            dataset_configuratie = self.dataset_manager.get_dataset_config(geselecteerde_dataset)
+            if dataset_configuratie:
+                self._toon_dataset_velden(dataset_configuratie)
                 st.header("Stap 2: Download Excel")
-                self._stap_download_excel(selected_dataset, config)
+                self._stap_download_excel(geselecteerde_dataset, dataset_configuratie)
                 st.header("Stap 3: Upload Excel")
-                self._stap_upload_excel(selected_dataset, config)
+                self._stap_upload_excel(geselecteerde_dataset, dataset_configuratie)
 
     def _toon_uitlog_knop(self):
         """
