@@ -7,7 +7,7 @@ import time
 from utils.css_loader import load_css
 from pages.home import VIPDataMakelaarApp
 
-from pages.login import show_login
+from pages.login import toon_loginscherm
 
 
 # Stel logging in op INFO-niveau zodat belangrijke informatie gelogd wordt (voor ontwikkelaars)
@@ -36,4 +36,4 @@ if st.session_state.get("logged_in"):
     app.start()
 else:
     # Als de gebruiker niet ingelogd is, toon dan het inlogscherm
-    show_login()
+    toon_loginscherm()
