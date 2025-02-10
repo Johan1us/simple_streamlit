@@ -137,7 +137,8 @@ class APIClient:
             identifier: Optional[str] = None,
             only_active: bool = False,
             page: int = 0,
-            page_size: int = 50
+            page_size: int = 50,
+            **kwargs  # Accept additional filter parameters
     ) -> Dict[str, Any]:
         """
         Haal een pagina objecten op van een bepaald objecttype.
@@ -149,17 +150,20 @@ class APIClient:
             only_active (bool): Alleen actieve objecten ophalen.
             page (int): Paginanummer.
             page_size (int): Aantal objecten per pagina.
+            **kwargs: Additional filter parameters to pass directly to the API.
 
         Returns:
             Dict[str, Any]: De JSON-respons van de API met objecten.
         """
         url = f"{self.base_url}/v1/objects/filterByObjectType"
-        params: Dict[str, Union[str, int, bool, List[str]]] = {
+        params = {
             "objectType": object_type,
-            "onlyActive": str(only_active).lower(),  # De API verwacht 'true' of 'false' als string
+            "onlyActive": str(only_active).lower(),
             "page": page,
-            "pageSize": page_size
+            "pageSize": page_size,
+            **kwargs  # Include additional filter parameters
         }
+        
         if attributes:
             params["attributes"] = attributes
         if identifier:
@@ -192,6 +196,7 @@ class APIClient:
             only_active: bool = False,
             page_size: int = 1000,
             st=None,
+            **kwargs  # Add this to accept additional filter parameters
     ) -> Dict[str, Any]:
         """
         Haal alle objecten op van een bepaald objecttype over alle beschikbare pagina's heen.
@@ -208,6 +213,7 @@ class APIClient:
             only_active (bool): Alleen actieve objecten ophalen.
             page_size (int): Aantal objecten per pagina.
             st: (Optioneel) Streamlit module voor visuele feedback.
+            **kwargs: Additional filter parameters to pass to get_objects.
 
         Returns:
             Dict[str, Any]: Een dictionary met:
@@ -238,7 +244,8 @@ class APIClient:
                 identifier=identifier,
                 only_active=only_active,
                 page=current_page,
-                page_size=page_size
+                page_size=page_size,
+                **kwargs  # Pass through the additional filter parameters
             )
 
             current_page_objects = resp.get("objects", [])

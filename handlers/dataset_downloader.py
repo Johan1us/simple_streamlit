@@ -14,14 +14,18 @@ from utils.metadata_handler import build_metadata_map
 # Stel logging in op DEBUG-niveau voor gedetailleerde informatie
 logging.basicConfig(level=logging.DEBUG)
 
-class ExcelDownloader:
+class DatasetDownloader:
     """
     Klasse voor het genereren (downloaden) van een Excel-bestand op basis van een datasetconfiguratie.
     """
 
-    def __init__(self, config: Dict[str, Any], api_client: APIClient):
+    def __init__(self, config: Dict[str, Any], api_client: APIClient, filter_params: Dict[str, Any]):
+        """
+        Initialiseer de DatasetDownloader met de configuratie, API-client en filter parameters.
+        """
         self.config = config
         self.api_client = api_client
+        self.filter_params = filter_params
 
     def generate_excel(self) -> bytes:
         """
@@ -37,6 +41,7 @@ class ExcelDownloader:
             object_type=object_type,
             attributes=attribute_names,
             only_active=True,
+            **self.filter_params,
             st=st,
         )
         st.success("Dataset opgehaald van de API")

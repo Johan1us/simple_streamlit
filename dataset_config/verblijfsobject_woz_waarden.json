@@ -1,6 +1,7 @@
 {
   "dataset": "Verblijfsobject WOZ waarden",
   "objectType": "Verblijfsobject",
+  "complexFilter": true,
   "attributes": [
     {
       "excelColumnName": "WOZ waarde",
