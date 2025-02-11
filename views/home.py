@@ -60,10 +60,16 @@ class VIPDataMakelaarApp:
             self._toon_dataset_velden(dataset_configuratie)
             print("toon dataset velden")
 
-            # Toon de complexen die beschikbaar zijn
-            complex_selectie = self.toon_complexen()
+            # check if complexFilter is true
+            complex_filter = dataset_configuratie.get("complexFilter", False)
+            if complex_filter:
+                complexen = self.get_complexen()
 
-            if dataset_configuratie and complex_selectie:
+                complex_selectie = self.toon_complexen(complexen=complexen)
+            else:
+                complex_selectie = None
+                complex_filter = True
+            if dataset_configuratie and complex_filter:
 
                 st.header("Stap 2: Download Excel")
                 self._stap_download_excel(geselecteerde_dataset, dataset_configuratie, complex_selectie)
@@ -97,24 +103,15 @@ class VIPDataMakelaarApp:
         df = pd.DataFrame(excel_columns, columns=["Velden :"])
         st.dataframe(df, hide_index=True)
 
-    def _stap_download_excel(self, selected_dataset: str, config: dict, complex_filter: list = None) -> None:
+    def _stap_download_excel(self, selected_dataset: str, config: dict, complex_selectie: list = None) -> None:
         """
         Voer stap 2 uit: genereer en bied een Excel-bestand aan voor download.
         """
-        if complex_filter:
-            # If only one complex is selected, pass it as a single string.
-            # If multiple complexes are selected, join them using a comma.
-            if len(complex_filter) == 1:
-                filter_value = complex_filter[0]
-            else:
-                filter_value = ",".join(complex_filter)
-            # Pass the Cluster directly as a query parameter, not as attributesFilter
-            filter_params = {"Cluster": filter_value}
-        else:
-            filter_params = {}
         
         if st.button("Genereer Excel"):
-            downloader = DatasetDownloader(config, self.api_client, filter_params)
+            downloader = DatasetDownloader(config, self.api_client, complex_selectie=complex_selectie)
+
+
             excel_file = downloader.generate_excel()
             file_name = self.dataset_manager.get_file_name(selected_dataset) or "download"
             st.download_button(
@@ -129,31 +126,27 @@ class VIPDataMakelaarApp:
         Voer stap 3 uit: verwerk de upload van een Excel-bestand.
         """
         uploader = ExcelUploader(config, self.dataset_manager, selected_dataset)
+
+        # @st.cache_data(ttl=3600)  # Cache for 1 hour
         uploader.process_upload()
 
     @staticmethod
-    def toon_complexen() -> None:
+    def toon_complexen(complexen: list) -> list:
         """
         Toon de complexen die beschikbaar zijn.
         """
         st.write("Selecteer complex:")
         print("Selecteer complex:")
-        complexen = ["10001 - VvE Geldersestraat", "10002 - VvE Utrechtsestraat", "10003 - VvE Brabantsestraat"]
-
-        # 10 new complexen
-        nep_complexen = ["10004 - VvE Limburgsestraat", "10005 - VvE Drentsestraat", "10006 - VvE Overijsselsestraat", "10007 - VvE Flevolandsestraat", "10008 - VvE Groningsestraat", "10009 - VvE Zuid-Hollandsestraat", "10010 - VvE Noord-Hollandsestraat", "10011 - VvE Zeelandsestraat", "10012 - VvE Friesestraat", "10013 - VvE Utrechtsestraat"]
-        complexen.extend(nep_complexen)
         if complexen:
-
             df = pd.DataFrame(complexen, columns=["Complexen"])
-            # Voeg een extra kolom toe voor de selectie
             df["Selecteer"] = False
-            # zonder index en met een checkbox-kolom
-            complex_keuze = st.data_editor(df, hide_index=True, use_container_width=True, height=200, column_config={"Complexen": "WSR Complex","Selecteer": st.column_config.CheckboxColumn(
-                "Jou selectie",
-                help="Selecteer de complexen die je wilt gebruiken in de applicatie",
-
-            )},disabled=["Complexen"])
+            complex_keuze = st.data_editor(df, hide_index=True, use_container_width=True, height=200, column_config={
+                "Complexen": "Complex",
+                "Selecteer": st.column_config.CheckboxColumn(
+                    "Selectie",
+                    help="Selecteer de complexen voor deze dataset",
+                )
+            }, disabled=["Complexen"])
             print(complex_keuze)
             complex_keuze_lijst = []
             for index, row in complex_keuze.iterrows():
@@ -162,12 +155,21 @@ class VIPDataMakelaarApp:
 
 
             st.write(f"Je hebt {len(complex_keuze_lijst)} complexen geselecteerd.")
-            st.write(f"Je hebt de volgende complexen geselecteerd: {complex_keuze_lijst}")
-            print(complex_keuze_lijst)
-
+            if len(complex_keuze_lijst) == 1:
+                st.write(f"Je hebt {len(complex_keuze_lijst)} complex geselecteerd.")
+            else:
+                st.write(f"Je hebt {len(complex_keuze_lijst)} complexen geselecteerd.")
 
             # complex_keuze = st.selectbox("Complex", complex_opties, index=0)
             return complex_keuze_lijst
         return None
+
+    @st.cache_data(ttl=3600)  # Cache for 1 hour
+    def get_complexen(_self):
+        """
+        Haal de lijst van complexen op uit de API.
+        """
+        complexen = _self.api_client.get_complexen()
+        return complexen
 
 

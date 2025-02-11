@@ -451,8 +451,9 @@ class ExcelValidator:
                 elif field_type == 'DATE':
                     df[excel_name] = pd.to_datetime(df[excel_name], errors='coerce')
                 elif field_type == 'BOOLEAN':
-                    # Convert 'Ja'/'Nee' to boolean
-                    df[excel_name] = df[excel_name].map({'Ja': True, 'Nee': False})
+                    # Skip converting "Ja"/"Nee" to boolean so validation sees them as strings
+                    # df[excel_name] = df[excel_name].map({'Ja': True, 'Nee': False})
+                    pass
                 
                 print(f"New dtype: {df[excel_name].dtype}")
                 

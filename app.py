@@ -5,9 +5,9 @@ import time
 
 # Importeer functies voor het laden van CSS en het tonen van de juiste pagina's
 from utils.css_loader import load_css
-from pages.home import VIPDataMakelaarApp
+from views.home import VIPDataMakelaarApp
 
-from pages.login import toon_loginscherm
+from views.login import toon_loginscherm
 
 
 # Stel logging in op INFO-niveau zodat belangrijke informatie gelogd wordt (voor ontwikkelaars)

@@ -1,0 +1,10 @@
+{
+  "dataset": "Complex Namen",
+  "objectType": "Building",
+  "attributes": [
+    {
+      "excelColumnName": "Description",
+      "AttributeName": "Description"
+    }
+  ]
+}

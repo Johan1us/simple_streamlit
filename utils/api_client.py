@@ -155,26 +155,57 @@ class APIClient:
         Returns:
             Dict[str, Any]: De JSON-respons van de API met objecten.
         """
-        url = f"{self.base_url}/v1/objects/filterByObjectType"
+        url = f"{self.base_url}v1/objects/filterByObjectType"
         params = {
             "objectType": object_type,
             "onlyActive": str(only_active).lower(),
             "page": page,
             "pageSize": page_size,
-            **kwargs  # Include additional filter parameters
         }
+        
+        print(f"Initial params: {params}")
+        
+        # Handle filter_params if present in kwargs
+        if 'filter_params' in kwargs:
+            print(f"Found filter_params in kwargs: {kwargs['filter_params']}")
+            # Merge filter_params into params directly
+            params.update(kwargs['filter_params'])
+            del kwargs['filter_params']
+            print(f"Params after filter_params update: {params}")
+        
+        # Handle cluster parameter specifically
+        if 'cluster' in kwargs:
+            print(f"Found cluster in kwargs: {kwargs['cluster']}")
+            # Convert list to single string if needed
+            cluster_value = kwargs['cluster'][0] if isinstance(kwargs['cluster'], list) else kwargs['cluster']
+            params["Cluster"] = cluster_value  # Note the capital C
+            del kwargs['cluster']
+            print(f"Params after cluster handling: {params}")
+        
+        # Add remaining kwargs
+        params.update(kwargs)
+        print(f"Final params before attributes: {params}")
         
         if attributes:
             params["attributes"] = attributes
         if identifier:
             params["identifier"] = identifier
 
-        print(f"[DEBUG] Ophalen objecten van type '{object_type}'")
-        print(f"[DEBUG] URL: {url}")
-        print(f"[DEBUG] Headers: {self._headers()}")
-        print(f"[DEBUG] Params: {params}")
-
+        print("\n=== DEBUG GET_OBJECTS ===")
+        print(f"Base URL: {self.base_url}")
+        print(f"Full URL before request: {url}")
+        print(f"Parameters:")
+        for key, value in params.items():
+            print(f"  {key}: {value} (type: {type(value)})")
+        print(f"Headers: {self._headers()}")
+        
         response = requests.get(url, headers=self._headers(), params=params)
+        
+        print(f"Final URL after request: {response.url}")
+        print(f"Response status code: {response.status_code}")
+        if response.status_code != 200:
+            print(f"Response error message: {response.text}")
+        
         response.raise_for_status()
 
         data = response.json()
@@ -353,6 +384,33 @@ class APIClient:
             "totalCount": len(response_json_list)
         }
 
+    def get_complexen(self):
+
+        # complexen = self.get_all_objects(object_type="Building")
+
+
+
+        complex_list = []
+        complexen = self.get_all_objects(object_type="Building").get("objects", [])
+        print(f"Amount of complexen: {len(complexen)}")
+        print(f"Type complexen: {type(complexen)}")
+        print(f"Complexen: {complexen[0]['attributes'].get('Description', 'No Description found')}")
+        for complex in complexen:
+            description = complex.get("attributes", {}).get("Description", "No 'Description' found")
+            complex_list.append(description)
+        for complex in complex_list:
+            print(f"Complex: {complex}")
+        return complex_list
+        # for complex in complexen:
+        #     print(f"Complex: {complex}")
+        #
+        #     complex_list.append(complex.get("Description", "No 'Description' found"))
+        # # print(f"Complexen: {complexen}")
+        # print(f"Complexen: {complex_list}")
+        # return complex_list
+        # return complexen
+        # return response.json()
+
 
 # --- Testblok voor de APIClient ---
 if __name__ == "__main__":
@@ -373,30 +431,35 @@ if __name__ == "__main__":
     # Maak een instantie van de APIClient
     api_client = APIClient(client_id=client_id, client_secret=client_secret, base_url=base_url, token_url=token_url)
 
-    # Test de client door de headers op te halen
-    print("[DEBUG] Test client authenticatie headers:")
-    print(api_client.test_client())
+    # Haal complexen op
+    complexen = api_client.get_complexen()
+    # print(f"Complexen: {complexen}")
 
-    # Haal metadata op en sla deze op in een bestand
-    print("[DEBUG] Ophalen volledige metadata:")
-    all_metadata = api_client.get_metadata()
-    with open('metadata.json', 'w') as f:
-        json.dump(all_metadata, f)
-    print("[DEBUG] Metadata (eerste 200 tekens):", str(all_metadata)[:200], "...")
+    # # Test de client door de headers op te halen
+    # print("[DEBUG] Test client authenticatie headers:")
+    # print(api_client.test_client())
+    #
+    # # Haal metadata op en sla deze op in een bestand
+    # print("[DEBUG] Ophalen volledige metadata:")
+    # all_metadata = api_client.get_metadata()
+    # with open('metadata.json', 'w') as f:
+    #     json.dump(all_metadata, f)
+    # print("[DEBUG] Metadata (eerste 200 tekens):", str(all_metadata)[:200], "...")
+    #
+    # # Haal objecten op van een bepaald type, bijvoorbeeld 'Building'
+    # print("[DEBUG] Ophalen objecten van type 'Building':")
+    # attributes = ["Dakpartner - Building - Woonstad Rotterdam",
+    #               "Jaar laatste dakonderhoud - Building - Woonstad Rotterdam"]
+    # building_objects = api_client.get_objects(object_type="Building", attributes=attributes, only_active=True)
+    # print("[DEBUG] Eerste 5 objecten:")
+    # for obj in building_objects.get("objects", [])[:5]:
+    #     print(obj)
+    #
+    # # Haal alle objecten op van het type 'Building' en toon het totaal aantal
+    # print("[DEBUG] Ophalen alle objecten van type 'Building':")
+    # all_building_objects = api_client.get_all_objects(object_type="Building", attributes=attributes, only_active=True)
+    # print("[DEBUG] Aantal objecten:", all_building_objects.get("totalCount", 0))
+    # print("[DEBUG] Eerste 5 objecten:")
+    # for obj in all_building_objects.get("objects", [])[:5]:
+    #     print(obj)
 
-    # Haal objecten op van een bepaald type, bijvoorbeeld 'Building'
-    print("[DEBUG] Ophalen objecten van type 'Building':")
-    attributes = ["Dakpartner - Building - Woonstad Rotterdam",
-                  "Jaar laatste dakonderhoud - Building - Woonstad Rotterdam"]
-    building_objects = api_client.get_objects(object_type="Building", attributes=attributes, only_active=True)
-    print("[DEBUG] Eerste 5 objecten:")
-    for obj in building_objects.get("objects", [])[:5]:
-        print(obj)
-
-    # Haal alle objecten op van het type 'Building' en toon het totaal aantal
-    print("[DEBUG] Ophalen alle objecten van type 'Building':")
-    all_building_objects = api_client.get_all_objects(object_type="Building", attributes=attributes, only_active=True)
-    print("[DEBUG] Aantal objecten:", all_building_objects.get("totalCount", 0))
-    print("[DEBUG] Eerste 5 objecten:")
-    for obj in all_building_objects.get("objects", [])[:5]:
-        print(obj)

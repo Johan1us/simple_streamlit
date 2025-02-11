@@ -110,7 +110,7 @@ class ExcelUploadStep3:
         """Toon een preview van de eerste 5 rijen van de ingelezen Excel-data."""
         st.subheader("Excel Preview")
         st.write("Preview van de geüploade Excel:")
-        st.dataframe(df.head(5), hide_index=True)
+        st.dataframe(df.head(30), hide_index=True)
 
 
 # -------------------------------------------------
@@ -138,7 +138,7 @@ class ExcelUploadStep4:
             columns_mapping=self.columns_mapping,
             object_type=object_type_val
         )
-        self._show_expected_column_types(validator, self.metadata["objectTypes"][0]["attributes"])
+        # self._show_expected_column_types(validator, self.metadata["objectTypes"][0]["attributes"])
         validation_errors = validator.validate_excel(df)
         if validation_errors:
             st.error("De Excel bevat de volgende fouten:")
@@ -186,10 +186,10 @@ class ExcelUploadStep5:
         metadata_map = build_metadata_map(self.metadata, self.config)
         # Vervang eventuele inf, -inf en NaN-waarden door None
         df_clean = df.replace([float("inf"), float("-inf"), float("nan")], None)
-        st.write("Debug - DataFrame types:")
-        st.write(df_clean.dtypes)
-        st.write("\nDebug - Eerste rij raw values:")
-        st.write(df_clean.iloc[0])
+        # st.write("Debug - DataFrame types:")
+        # st.write(df_clean.dtypes)
+        # st.write("\nDebug - Eerste rij raw values:")
+        # st.write(df_clean.iloc[0])
         data_to_send = self._prepare_data_to_send(df_clean, object_type_val, metadata_map)
         self._upload_to_vip(object_type_val, data_to_send)
 
@@ -215,6 +215,7 @@ class ExcelUploadStep5:
 
     def _upload_to_vip(self, object_type: str, data_to_send: List[Dict[str, Any]]) -> None:
         try:
+
             response = self.dataset_config.api_client.update_objects(objects_data=data_to_send)
             if response:
                 response_objects = response.get("objects", [])

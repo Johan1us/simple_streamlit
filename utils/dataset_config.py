@@ -104,6 +104,8 @@ class DatasetConfig:
         configs = self._load_configs()
         # Haal uit elke configuratie de waarde op van de sleutel "dataset" (indien aanwezig)
         datasets = [cfg.get("dataset") for cfg in configs if "dataset" in cfg]
+        # Haal "Complex Namen" uit de lijst van datasets
+        datasets = [dataset for dataset in datasets if dataset != "Complex Namen"]
         return datasets
 
     def get_dataset_config(self, dataset_name: str) -> Optional[Dict[str, Any]]:
