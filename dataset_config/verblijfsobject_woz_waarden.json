@@ -1,6 +1,7 @@
 {
   "dataset": "Verblijfsobject WOZ waarden",
   "objectType": "Verblijfsobject",
+  "complexFilter": true,
   "attributes": [
     {
       "excelColumnName": "WOZ waarde",
@@ -9,6 +10,10 @@
     {
       "excelColumnName": "WOZ peildatum",
       "AttributeName": "WOZ peildatum - Verblijfsobject - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Belastingobjectnummer",
+      "AttributeName": "Belastingobjectnummer - Verblijfsobject - Woonstad Rotterdam"
     }
   ]
 }

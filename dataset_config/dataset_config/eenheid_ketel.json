@@ -1,6 +1,7 @@
 {
   "dataset": "Eenheid Ketel",
   "objectType": "Unit",
+  "complexFilter": true,
   "attributes": [
     {
       "excelColumnName": "Adres",
