@@ -27,7 +27,7 @@ print(f"Running app.py at {server_time}")
 # 3. Controleer of de 'logged_in' status al in de sessie staat.
 #    Als dat niet zo is, stel de standaardwaarde in op True (pas dit aan indien nodig).
 if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = True
+    st.session_state["logged_in"] = False
 
 # 4. Toon de juiste pagina op basis van de login status
 if st.session_state.get("logged_in"):
