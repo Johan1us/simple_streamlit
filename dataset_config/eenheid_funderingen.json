@@ -1,6 +1,7 @@
 {
   "dataset": "Eenheid Funderingen",
   "objectType": "Unit",
+  "complexFilter": true,
   "attributes": [
     {
       "excelColumnName": "Huidig funderingslabel",
