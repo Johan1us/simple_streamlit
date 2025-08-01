@@ -26,11 +26,45 @@ class VIPDataMakelaarApp:
     """
 
     def __init__(self):
-        # Haal API-gegevens op uit de omgevingsvariabelen
-        client_id = os.getenv("LUXS_PROD_CLIENT_ID")
-        client_secret = os.getenv("LUXS_PROD_CLIENT_SECRET")
-        base_url = os.getenv("LUXS_PROD_BASE_URL")
-        token_url = os.getenv("LUXS_PROD_TOKEN_URL")
+        self.api_client = None
+        self.dataset_manager = None
+        huidige_map = Path(__file__).resolve().parent
+        self.project_root = huidige_map.parent
+
+    def _initialize_app(self, environment: str):
+        """Initialiseer de API-client en dataset-manager op basis van de geselecteerde omgeving."""
+        if environment == "prod":
+            env_prefix = "LUXS_PROD"
+        else:
+            env_prefix = "LUXS_ACCEPT"
+
+        base_url = os.getenv(f"{env_prefix}_BASE_URL")
+
+        # Herinitialiseer alleen als de client niet bestaat of als de omgeving is gewijzigd.
+        if self.api_client and self.api_client.base_url == base_url:
+            return
+
+        # Wis de cache bij het wisselen van omgeving voor verse data.
+        st.cache_data.clear()
+
+        client_id = os.getenv(f"{env_prefix}_CLIENT_ID")
+        client_secret = os.getenv(f"{env_prefix}_CLIENT_SECRET")
+        token_url = os.getenv(f"{env_prefix}_TOKEN_URL")
+
+        # DEBUG: Print de gebruikte credentials om te verifiëren
+        print(f"--- [DEBUG] Geselecteerde omgeving: {environment} ---")
+        print(f"--- [DEBUG] Gebruikte Client ID: {client_id} ---")
+        # Let op: print de secret alleen voor debuggen, verwijder dit later!
+        print(f"--- [DEBUG] Gebruikte Client Secret: {'*' * len(client_secret) if client_secret else 'Niet gevonden'} ---")
+        print(f"--- [DEBUG] Gebruikte Base URL: {base_url} ---")
+        print(f"--- [DEBUG] Gebruikte Token URL: {token_url} ---")
+
+
+        if not all([client_id, client_secret, base_url, token_url]):
+            st.error(f"Omgevingsvariabelen voor '{environment}' zijn niet correct ingesteld.")
+            self.api_client = None
+            self.dataset_manager = None
+            st.stop()
 
         self.api_client = APIClient(
             client_id=client_id,
@@ -38,43 +72,68 @@ class VIPDataMakelaarApp:
             base_url=base_url,
             token_url=token_url
         )
-
-        # Bepaal het projectpad en initialiseer de DatasetConfig
-        huidige_map = Path(__file__).resolve().parent
-        project_root = huidige_map.parent
-        self.dataset_manager = DatasetConfig(project_root, self.api_client)
+        self.dataset_manager = DatasetConfig(self.project_root, self.api_client)
 
     def start(self) -> None:
         """
         Voer de applicatie uit met de drie hoofdstappen.
         """
+        if "environment" not in st.session_state:
+            st.session_state["environment"] = None
+
         titel_kolom = self._toon_uitlog_knop()
         with titel_kolom:
             st.title("VIP DataMakelaar")
 
-        st.header("Stap 1: Selecteer een dataset")
-        geselecteerde_dataset = self._selecteer_dataset()
+        st.header("Selecteer een omgeving")
+        col1, col2 = st.columns(2)
 
-        if geselecteerde_dataset and geselecteerde_dataset != "Selecteer dataset":
-            dataset_configuratie = self.dataset_manager.get_dataset_config(geselecteerde_dataset)
-            self._toon_dataset_velden(dataset_configuratie)
-            print("toon dataset velden")
+        env_changed = False
+        current_env = st.session_state.get("environment")
 
-            # check if complexFilter is true
-            complex_filter = dataset_configuratie.get("complexFilter", False)
-            if complex_filter:
-                complexen = self.get_complexen()
+        if col1.button("Accept", key="accept_btn"):
+            if current_env != "accept":
+                st.session_state["environment"] = "accept"
+                env_changed = True
 
-                complex_selectie = self.toon_complexen(complexen=complexen)
-            else:
-                complex_selectie = None
-                complex_filter = True
-            if dataset_configuratie and complex_filter:
+        if col2.button("Production", key="prod_btn"):
+            if current_env != "prod":
+                st.session_state["environment"] = "prod"
+                env_changed = True
 
-                st.header("Stap 2: Download Excel")
-                self._stap_download_excel(geselecteerde_dataset, dataset_configuratie, complex_selectie)
-                st.header("Stap 3: Upload Excel")
-                self._stap_upload_excel(geselecteerde_dataset, dataset_configuratie)
+        if env_changed:
+            st.rerun()
+
+        if st.session_state.get("environment"):
+            self._initialize_app(st.session_state["environment"])
+            env_display_name = "Production" if st.session_state['environment'] == 'prod' else st.session_state['environment'].capitalize()
+            st.success(f"Huidige omgeving: {env_display_name}")
+
+            st.header("Stap 1: Selecteer een dataset")
+            geselecteerde_dataset = self._selecteer_dataset()
+
+            if geselecteerde_dataset and geselecteerde_dataset != "Selecteer dataset":
+                dataset_configuratie = self.dataset_manager.get_dataset_config(geselecteerde_dataset)
+                self._toon_dataset_velden(dataset_configuratie)
+                print("toon dataset velden")
+
+                # check if complexFilter is true
+                complex_filter = dataset_configuratie.get("complexFilter", False)
+                if complex_filter:
+                    complexen = self.get_complexen()
+
+                    complex_selectie = self.toon_complexen(complexen=complexen)
+                else:
+                    complex_selectie = None
+                    complex_filter = True
+                if dataset_configuratie and complex_filter:
+
+                    st.header("Stap 2: Download Excel")
+                    self._stap_download_excel(geselecteerde_dataset, dataset_configuratie, complex_selectie)
+                    st.header("Stap 3: Upload Excel")
+                    self._stap_upload_excel(geselecteerde_dataset, dataset_configuratie)
+        else:
+            st.info("Selecteer een omgeving om te beginnen.")
 
     def _toon_uitlog_knop(self):
         """
@@ -84,6 +143,7 @@ class VIPDataMakelaarApp:
         with col2:
             if st.button("Uitloggen", key="logout_btn"):
                 st.session_state["logged_in"] = False
+                st.session_state["environment"] = None
                 st.rerun()
         return col1
 
