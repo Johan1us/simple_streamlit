@@ -84,7 +84,7 @@ class APIClient:
         self._ensure_token()
         return {
             "Authorization": f"Bearer {self.token}",
-            "Content-Type": "application/json"
+            "Accept": "application/json"
         }
 
     def test_client(self) -> Dict[str, str]:
@@ -299,32 +299,16 @@ class APIClient:
             "pageSize": page_size
         }
 
-    def upsert_objects(self, objects_data: List[Dict[str, Any]]) -> Any:
-        """
-        Voeg nieuwe objecten toe of werk bestaande objecten bij via een POST-request.
-
-        Args:
-            objects_data (List[Dict[str, Any]]): Lijst met objectdefinities om toe te voegen of bij te werken.
-
-        Returns:
-            Any: De JSON-respons van de API.
-        """
-        url = f"{self.base_url}/v1/objects"
-        print(f"[DEBUG] Upsert van objecten naar {url}")
-        response = requests.post(url, headers=self._headers(), json=objects_data)
-        response.raise_for_status()
-        return response.json()
-
-    def update_objects(self,
+    def upsert_objects_in_batches(self,
                        objects_data: List[Dict[str, Any]],
                        batch_size: int = 100,
                        timeout: int = 300,
                        max_retries: int = 3) -> Any:
         """
-        Update bestaande objecten in batches om timeouts te voorkomen via een PUT-request.
+        Voegt objecten toe of werkt ze bij in batches, met een POST-request om timeouts te vermijden.
 
         Args:
-            objects_data (List[Dict[str, Any]]): Lijst met objectdefinities om bij te werken.
+            objects_data (List[Dict[str, Any]]): Lijst met objectdefinities om toe te voegen of bij te werken.
             batch_size (int): Aantal objecten per batch (standaard 100).
             timeout (int): Timeout in seconden per request (standaard 300).
             max_retries (int): Maximaal aantal pogingen per batch (standaard 3).
@@ -335,7 +319,7 @@ class APIClient:
         url = f"{self.base_url}/v1/objects"
         response_json_list = []
 
-        print(f"[DEBUG] Start update van {len(objects_data)} objecten in batches van {batch_size}")
+        print(f"[DEBUG] Start upsert van {len(objects_data)} objecten in batches van {batch_size}")
         print(f"[DEBUG] Timeout per request: {timeout} seconden")
 
 
@@ -348,7 +332,9 @@ class APIClient:
             for retry in range(max_retries):
                 try:
                     print(f"[DEBUG] Verwerken batch {batch_num}/{total_batches} (poging {retry + 1}/{max_retries})")
-                    response = requests.put(
+                    # Debug statement om de request body te tonen
+                    print(f"[DEBUG] Request body for batch {batch_num}:\n{json.dumps(batch, indent=2)}")
+                    response = requests.post(
                         url,
                         headers=self._headers(),
                         json=batch,
@@ -384,7 +370,7 @@ class APIClient:
             "totalCount": len(response_json_list)
         }
 
-    def get_complexen(self):
+    def get_complexen(self) -> Optional[List[str]]:
 
         # complexen = self.get_all_objects(object_type="Building")
 
