@@ -200,6 +200,30 @@ class ExcelHandler:
                 # Set all remaining null values to empty string
                 df[key] = df[key].replace({pd.NA: '', pd.NaT: '', None: '', 'nan': '', float('nan'): ''})
 
+        # Correct general date columns that are not just year
+        date_other_keys = [k for k, v in self.metadata.items() if v.get('type') == 'DATE' and v.get('dateFormat') != 'yyyy']
+        for key in date_other_keys:
+            if key in df.columns:
+                # Create a mask for non-null values
+                non_null_mask = df[key].notna()
+
+                if non_null_mask.any():
+                    # Convert to datetime objects
+                    dates = pd.to_datetime(df.loc[non_null_mask, key], errors='coerce')
+
+                    # Identify dates that need a +1 hour adjustment
+                    adjustment_mask = dates.dt.strftime('%H:%M:%S') == '23:00:00'
+                    
+                    # Apply the +1 hour adjustment
+                    adjusted_dates = dates[adjustment_mask] + pd.Timedelta(hours=1)
+                    
+                    # Update DataFrame: apply adjustment and format all dates
+                    df.loc[non_null_mask & adjustment_mask, key] = adjusted_dates.dt.strftime('%d-%m-%Y')
+                    df.loc[non_null_mask & ~adjustment_mask, key] = dates[~adjustment_mask].dt.strftime('%d-%m-%Y')
+
+                # Ensure NaT values become empty strings
+                df[key] = df[key].replace({pd.NaT: ''})
+
         # Controleer of alle vereiste kolommen bestaan, zo niet, voeg ze toe met None
         for rc in self.required_columns:
             if rc not in df.columns:
