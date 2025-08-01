@@ -199,24 +199,48 @@ class ExcelUploadStep5:
             raise ValueError("Geen 'identifier' kolom gevonden in de data!")
         type_mapper = DataTypeMapper(metadata_map)
         data_to_send = []
-        for _, row in df.iterrows():
+
+        dataset_config_data = self.dataset_config.get_dataset_config(self.selected_dataset)
+        parent_object_type = dataset_config_data.get("parentObjectType")
+        parent_identifier_excel_column = dataset_config_data.get("parentIdentifier")
+
+        # Extra debugging
+        print(f"[DEBUG] parent_object_type from config: {parent_object_type}")
+        print(f"[DEBUG] parent_identifier_excel_column from config: {parent_identifier_excel_column}")
+
+        for i, row in df.iterrows():
+            # Print de kolomkoppen alleen voor de eerste rij om logs te beperken
+            if i == 0:
+                print(f"[DEBUG] Excel column headers: {list(row.keys())}")
+
             attributes = {}
             for excel_col, api_field in self.columns_mapping.items():
                 original_value = row[excel_col]
                 field_metadata = metadata_map.get(api_field, {})
                 new_value = type_mapper.convert_value(original_value, field_metadata)
                 attributes[api_field] = new_value
-            data_to_send.append({
+
+            data_object = {
                 "objectType": object_type,
                 "identifier": str(row["identifier"]),
                 "attributes": attributes
-            })
+            }
+
+            if parent_object_type and parent_identifier_excel_column:
+                if parent_identifier_excel_column in row and pd.notna(row[parent_identifier_excel_column]):
+                    parent_identifier_value = row[parent_identifier_excel_column]
+                    data_object["parentObjectType"] = parent_object_type
+                    data_object["parentIdentifier"] = str(parent_identifier_value)
+                else:
+                    st.warning(f"De kolom '{parent_identifier_excel_column}' opgegeven als parentIdentifier is niet gevonden of leeg in het Excel-bestand.")
+
+            data_to_send.append(data_object)
         return data_to_send
 
     def _upload_to_vip(self, object_type: str, data_to_send: List[Dict[str, Any]]) -> None:
         try:
 
-            response = self.dataset_config.api_client.update_objects(objects_data=data_to_send)
+            response = self.dataset_config.api_client.upsert_objects_in_batches(objects_data=data_to_send)
             if response:
                 response_objects = response.get("objects", [])
                 failed_updates = [obj for obj in response_objects if not obj.get("success")]
@@ -279,6 +303,7 @@ class ExcelUploader:
 
         # Stap 5: Upload de gevalideerde data als de gebruiker op de knop drukt
         if st.button("Upload naar VIP"):
-            step5 = ExcelUploadStep5(self.config, self.dataset_config, self.selected_dataset, columns_mapping,
+            full_dataset_config = self.dataset_config.get_dataset_config(self.selected_dataset)
+            step5 = ExcelUploadStep5(full_dataset_config, self.dataset_config, self.selected_dataset, columns_mapping,
                                      metadata)
             step5.upload_data(df)
