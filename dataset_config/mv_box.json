@@ -1,0 +1,185 @@
+{
+  "dataset": "MV box",
+  "objectType": "MV box",
+  "parentObjectType": "Unit",
+  "parentIdentifier": "EenheidId",
+  "complexFilter": true,
+  "attributes": [
+    {
+      "excelColumnName": "EenheidId",
+      "AttributeName": "EenheidId - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "ComplexId",
+      "AttributeName": "ComplexId - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Adres",
+      "AttributeName": "Adres"
+    },
+    {
+      "excelColumnName": "OGE Nummer",
+      "AttributeName": "OGE Nummer"
+    },
+    {
+      "excelColumnName": "BagVerblijfsobjectId",
+      "AttributeName": "BagVerblijfsobjectId"
+    },
+    {
+      "excelColumnName": "ElementType",
+      "AttributeName": "ElementType - IfcID"
+    },
+    {
+      "excelColumnName": "ObjectAfwerking",
+      "AttributeName": "ObjectAfwerking - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "CO2 gestuurd",
+      "AttributeName": "CO2 gestuurd - MV box - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Merk",
+      "AttributeName": "Merk - MV box - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Drukgestuurd",
+      "AttributeName": "Drukgestuurd - MV box - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Exterieur",
+      "AttributeName": "Exterieur - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Onderhoud Woonstad",
+      "AttributeName": "Onderhoud Woonstad - MV box - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "BagPandId",
+      "AttributeName": "BagPandId"
+    },
+    {
+      "excelColumnName": "Vochtgestuurd",
+      "AttributeName": "Vochtgestuurd - MV box - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "IfcEntityClass",
+      "AttributeName": "IfcEntityClass - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Materiaal",
+      "AttributeName": "Materiaal - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Collectief",
+      "AttributeName": "Collectief - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Active to",
+      "AttributeName": "Active to"
+    },
+    {
+      "excelColumnName": "Installateur",
+      "AttributeName": "Installateur - MV box - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "GUID",
+      "AttributeName": "GUID - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Wasemkap met recirculatie",
+      "AttributeName": "Wasemkap met recirculatie - MV box - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Opmerking",
+      "AttributeName": "Opmerking - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Uniek_ID",
+      "AttributeName": "Uniek_ID"
+    },
+    {
+      "excelColumnName": "RuimterelatieId",
+      "AttributeName": "RuimterelatieId - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "IfcExportAs",
+      "AttributeName": "IfcExportAs - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Active from",
+      "AttributeName": "Active from"
+    },
+    {
+      "excelColumnName": "Tijdgestuurd",
+      "AttributeName": "Tijdgestuurd - MV box - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Cluster",
+      "AttributeName": "Cluster"
+    },
+    {
+      "excelColumnName": "NlSfb4",
+      "AttributeName": "NlSfb4 - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Serienummer",
+      "AttributeName": "Serienummer - MV box - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Bron",
+      "AttributeName": "Bron - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "BallastAfwerking",
+      "AttributeName": "BallastAfwerking - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Referentie id",
+      "AttributeName": "Referentie id - MV box - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Oppervlakte",
+      "AttributeName": "Oppervlakte - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Handgestuurd",
+      "AttributeName": "Handgestuurd - MV box - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "BatId",
+      "AttributeName": "BatId - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Datum plaatsing",
+      "AttributeName": "Datum plaatsing - MV box - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Ballastlaag",
+      "AttributeName": "Ballastlaag - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Toegepast type afzuigventielen",
+      "AttributeName": "Toegepast type afzuigventielen - MV box - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Onderhoudspartner",
+      "AttributeName": "Onderhoudspartner - MV box - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Type",
+      "AttributeName": "Type - MV box - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "ObjectType",
+      "AttributeName": "ObjectType - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Daktype",
+      "AttributeName": "Daktype - Woonstad Rotterdam"
+    },
+    {
+      "excelColumnName": "Datum laatste bezoek",
+      "AttributeName": "Datum laatste bezoek - MV box - Woonstad Rotterdam"
+    }
+  ]
+}

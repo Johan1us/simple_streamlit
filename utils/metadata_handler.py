@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 import streamlit as st
+from datetime import datetime
 
 # Configureer de logging module zodat debug-informatie zichtbaar wordt
 logging.basicConfig(level=logging.DEBUG)
@@ -112,8 +113,6 @@ class DataTypeMapper:
         Convert a value based on its metadata type and format.
 
         Args:
-            col: Excel column name
-            api_field: API field name
             value: Value to convert
             field_metadata: Metadata for this field from the API
         """
@@ -147,7 +146,9 @@ class DataTypeMapper:
             elif date_format == "yyyy-MM-dd":
                 return value.strftime("%Y-%m-%d")
             else:
-                return value.strftime("%Y-%m-%d")  # default format
+                # Add 1 hour for timezone and format as per API requirements.
+                adjusted_value = value + pd.Timedelta(hours=1)
+                return adjusted_value.strftime("%d-%m-%Y %H:%M:%S")
 
         except Exception as e:
             st.write(f"Error converting date value {value}: {e}")
