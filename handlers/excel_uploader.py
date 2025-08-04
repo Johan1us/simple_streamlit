@@ -2,6 +2,7 @@ import logging
 from typing import Any, Dict, List, Tuple, Optional
 import pandas as pd
 import streamlit as st
+import uuid
 
 # Importeer de benodigde helpers en API-client
 from utils.metadata_handler import build_metadata_map, DataTypeMapper
@@ -76,17 +77,18 @@ class ExcelUploadStep2:
 # ------------------------------------------------------------
 class ExcelUploadStep3:
     """
-    Stap 3: Lees het geüploade Excel-bestand in met de opgegeven datatypes
-    en converteer de datumkolommen naar het juiste formaat.
+    Stap 3: Lees het Excel-bestand in, converteer datumkolommen en genereer identifiers.
     """
 
-    def __init__(self, dtype_mapping: Dict[str, Any], date_format_mapping: Dict[str, Any]):
+    def __init__(self, dtype_mapping: Dict[str, Any], date_format_mapping: Dict[str, Any], object_type: str):
         self.dtype_mapping = dtype_mapping
         self.date_format_mapping = date_format_mapping
+        self.object_type = object_type
 
     def read_and_convert_excel(self, excel_file) -> pd.DataFrame:
         df = self._read_excel(excel_file, self.dtype_mapping)
         self._convert_date_columns(df, self.date_format_mapping)
+        self._generate_identifiers(df)
         return df
 
     def _read_excel(self, file, dtype_mapping: Dict[str, Any]) -> pd.DataFrame:
@@ -105,6 +107,16 @@ class ExcelUploadStep3:
                         df[col] = pd.to_datetime(df[col], format=date_format, errors='coerce')
                 except Exception as e:
                     st.warning(f"Could not convert column {col} to date format {date_format}: {str(e)}")
+
+    def _generate_identifiers(self, df: pd.DataFrame) -> None:
+        """Generate identifiers for rows where it is missing."""
+        if 'identifier' not in df.columns:
+            df['identifier'] = None
+
+        for index, row in df.iterrows():
+            if pd.isna(row['identifier']) or row['identifier'] == '':
+                short_uuid = str(uuid.uuid4())[:8]
+                df.loc[index, 'identifier'] = f"{self.object_type}_{short_uuid}"
 
     def show_preview(self, df: pd.DataFrame) -> None:
         """Toon een preview van de eerste 5 rijen van de ingelezen Excel-data."""
@@ -196,7 +208,9 @@ class ExcelUploadStep5:
     def _prepare_data_to_send(self, df: pd.DataFrame, object_type: str,
                               metadata_map: Dict[str, Any]) -> List[Dict[str, Any]]:
         if "identifier" not in df.columns:
-            raise ValueError("Geen 'identifier' kolom gevonden in de data!")
+            st.warning("Geen 'identifier' kolom gevonden in het Excel-bestand. Deze wordt aangemaakt.")
+            df['identifier'] = None
+
         type_mapper = DataTypeMapper(metadata_map)
         data_to_send = []
 
@@ -292,7 +306,8 @@ class ExcelUploader:
             return
 
         # Stap 3: Lees het Excel-bestand in en converteer datumkolommen
-        step3 = ExcelUploadStep3(dtype_mapping, date_format_mapping)
+        object_type = self.dataset_config.get_object_type(self.selected_dataset)
+        step3 = ExcelUploadStep3(dtype_mapping, date_format_mapping, object_type)
         df = step3.read_and_convert_excel(excel_file)
         step3.show_preview(df)
 
