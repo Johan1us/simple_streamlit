@@ -170,6 +170,14 @@ class ExcelHandler:
         elif 'identifier' not in df.columns:
             df.insert(1, 'identifier', [None] * len(df))
 
+        # Clear auto-generated identifiers to prevent duplicates on re-upload
+        # These are identified by the pattern: "objectType_shortuuid"
+        if 'identifier' in df.columns:
+            # Create a mask for identifiers that are strings and match the pattern
+            pattern = f"^{self.object_type}_[a-f0-9-]{{8}}$"
+            mask = df['identifier'].str.match(pattern, na=False)
+            df.loc[mask, 'identifier'] = None
+
         # Boolean kolommen omzetten naar 'Ja'/'Nee'
         # We zoeken eerst naar alle attributen in metadata met type BOOLEAN
         boolean_keys = [k for k, v in self.metadata.items() if v.get('type') == 'BOOLEAN']
